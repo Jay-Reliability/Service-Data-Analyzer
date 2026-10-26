@@ -1,0 +1,3969 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SVC Data Pro-Analyzer Excel V3.0 ⚡ (Authored by JH Lee)</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+  * {
+    box-sizing: border-box;
+    user-select: none;
+  }
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100vh;
+    background-color: #EEF2F6;
+    font-family: "Malgun Gothic", "Apple SD Gothic Neo", "NanumGothic", sans-serif;
+    font-size: 9pt;
+    color: #1F2933;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Window Title Bar (Web App Header matching PyQt Window Title) */
+  .window-titlebar {
+    background: linear-gradient(90deg, #1E293B 0%, #243B53 100%);
+    color: #FFFFFF;
+    padding: 6px 14px;
+    font-weight: 700;
+    font-size: 9.5pt;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #102A43;
+    flex-shrink: 0;
+  }
+  .window-titlebar .title-text {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .window-titlebar .title-badge {
+    font-size: 8pt;
+    background-color: #2F80ED;
+    color: #FFFFFF;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+  /* Main Splitter Layout */
+  .main-container {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    padding: 8px;
+    gap: 0;
+    overflow: hidden;
+    min-height: 0;
+  }
+  /* Left Control Panel (Fixed 360px, scrollable) */
+  .control-scroll {
+    width: 360px;
+    min-width: 280px;
+    max-width: 520px;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 4px;
+    flex-shrink: 0;
+  }
+  .control-panel {
+    display: flex;
+    flex-direction: column;
+    padding: 4px;
+    gap: 6px;
+  }
+  /* Splitter Handle */
+  .splitter-handle {
+    width: 6px;
+    cursor: col-resize;
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .splitter-handle:hover, .splitter-handle.dragging {
+    background-color: #CBD5E1;
+  }
+  .splitter-handle::after {
+    content: "";
+    width: 2px;
+    height: 36px;
+    background-color: #94A3B8;
+    border-radius: 1px;
+  }
+  /* QGroupBox Equivalent */
+  .qgroupbox {
+    position: relative;
+    font-weight: bold;
+    border: 1px solid #B8C2CC;
+    border-radius: 8px;
+    margin-top: 8px;
+    padding: 14px 8px 8px 8px;
+    background-color: #F8FAFC;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .qgroupbox-title {
+    position: absolute;
+    top: -9px;
+    left: 10px;
+    background-color: #F8FAFC;
+    padding: 0 5px;
+    color: #243B53;
+    font-weight: bold;
+    font-size: 9pt;
+    line-height: 1.2;
+  }
+  /* QLabel Equivalent */
+  .qlabel {
+    color: #243B53;
+    background-color: transparent;
+    font-weight: normal;
+    margin-top: 2px;
+    margin-bottom: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .status-label {
+    color: #243B53;
+    font-weight: normal;
+    padding: 2px 4px;
+    font-size: 8.8pt;
+  }
+  .status-label.loaded {
+    color: #1B5E20;
+    font-weight: 600;
+  }
+  .status-label.error {
+    color: #D92D20;
+    font-weight: 700;
+  }
+  /* QPushButton Equivalent */
+  .qbutton {
+    background-color: #2F80ED;
+    color: white;
+    border: none;
+    border-radius: 7px;
+    padding: 8px 12px;
+    font-family: inherit;
+    font-size: 9pt;
+    font-weight: bold;
+    cursor: pointer;
+    text-align: center;
+    transition: background-color 0.12s;
+  }
+  .qbutton:hover:not(:disabled) {
+    background-color: #1C64D1;
+  }
+  .qbutton:active:not(:disabled) {
+    background-color: #164E9E;
+  }
+  .qbutton:disabled {
+    background-color: #A9C4EC;
+    color: #EDF2FB;
+    cursor: not-allowed;
+  }
+  /* Run Analysis Button */
+  #btn_run_analysis {
+    background-color: #2E7D32;
+    color: yellow;
+    border: none;
+    border-radius: 7px;
+    padding: 6px 11px;
+    font-weight: 700;
+    font-size: 10pt;
+    min-height: 35px;
+    margin-top: 2px;
+  }
+  #btn_run_analysis:hover:not(:disabled) {
+    background-color: #1B5E20;
+  }
+  #btn_run_analysis:active:not(:disabled) {
+    background-color: #14481A;
+  }
+  #btn_run_analysis:disabled {
+    background-color: #A5C7A7;
+    color: #EFEFC0;
+  }
+  /* Exit Button */
+  #btn_exit {
+    background-color: #D92D20;
+    color: white;
+    border: none;
+    border-radius: 7px;
+    padding: 6px 11px;
+    font-weight: 700;
+    font-size: 9pt;
+    min-height: 35px;
+  }
+  #btn_exit:hover:not(:disabled) {
+    background-color: #B42318;
+  }
+  #btn_exit:active:not(:disabled) {
+    background-color: #7A271A;
+  }
+  /* QComboBox Equivalent */
+  .qcombobox {
+    background-color: #FFFFFF;
+    border: 1px solid #BCCCDC;
+    border-radius: 6px;
+    padding: 4px 6px;
+    font-family: inherit;
+    font-size: 9pt;
+    color: #1F2933;
+    width: 100%;
+    outline: none;
+  }
+  .qcombobox:focus {
+    border-color: #2F80ED;
+  }
+  .hbox {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+  }
+  .radio-group {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 20px;
+    padding: 2px 4px;
+    font-weight: normal;
+  }
+  .radio-group label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    color: #1F2933;
+  }
+  /* QListWidget Equivalent */
+  .qlistwidget {
+    background-color: #FFFFFF;
+    border: 1px solid #BCCCDC;
+    border-radius: 6px;
+    padding: 3px;
+    height: 68px;
+    overflow-y: auto;
+    font-weight: normal;
+    position: relative;
+  }
+  #list_plot_months {
+    height: 74px;
+  }
+  .qlist-item {
+    padding: 2px 6px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 8.8pt;
+    line-height: 1.35;
+    color: #1F2933;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .qlist-item:hover {
+    background-color: #F0F4F8;
+  }
+  .qlist-item.selected {
+    background-color: #BEE3F8;
+    color: #102A43;
+    font-weight: 600;
+  }
+  .mini-actions {
+    display: inline-flex;
+    gap: 4px;
+  }
+  .mini-btn {
+    background: #E2E8F0;
+    border: 1px solid #CBD5E1;
+    color: #243B53;
+    border-radius: 4px;
+    padding: 0px 5px;
+    font-size: 7.5pt;
+    cursor: pointer;
+    font-weight: normal;
+  }
+  .mini-btn:hover {
+    background: #CBD5E1;
+  }
+
+  /* Right Visual Panel */
+  .visual-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding-left: 6px;
+    gap: 6px;
+    min-width: 0;
+    height: 100%;
+    overflow: hidden;
+  }
+  .dist-select-bar {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    background-color: #F8FAFC;
+    border: 1px solid #B8C2CC;
+    border-radius: 7px;
+    padding: 5px 10px;
+    flex-shrink: 0;
+  }
+  .dist-select-bar .qcombobox {
+    width: auto;
+    min-width: 90px;
+  }
+  /* Chart Container (stretch 3) */
+  .chart-section {
+    flex: 3;
+    display: flex;
+    flex-direction: column;
+    background-color: #FFFFFF;
+    border: 1px solid #BCCCDC;
+    border-radius: 6px;
+    overflow: hidden;
+    min-height: 220px;
+    position: relative;
+  }
+  /* NavigationToolbar2QT Equivalent */
+  .mpl-toolbar {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    background-color: #F8FAFC;
+    border-bottom: 1px solid #D9E2EC;
+    padding: 3px 8px;
+    flex-shrink: 0;
+  }
+  .mpl-toolbtn {
+    background-color: #FFFFFF;
+    border: 1px solid #CBD5E1;
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 8.5pt;
+    color: #243B53;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: inherit;
+  }
+  .mpl-toolbtn:hover {
+    background-color: #E2E8F0;
+  }
+  .mpl-toolbtn.active {
+    background-color: #BEE3F8;
+    border-color: #2F80ED;
+    color: #102A43;
+    font-weight: bold;
+  }
+  .mpl-coords {
+    margin-left: auto;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 8.5pt;
+    color: #486581;
+  }
+  .canvas-wrapper {
+    flex: 1;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+  #chart_canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* Bottom Panel (stretch 2) */
+  .bottom-section {
+    flex: 2;
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    min-height: 185px;
+    overflow: hidden;
+  }
+  .analysis-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 240px;
+    height: 100%;
+  }
+  .panel-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 28px;
+    flex-shrink: 0;
+  }
+  .panel-header .qlabel {
+    font-weight: 700;
+    color: #243B53;
+  }
+  .qtextedit {
+    flex: 1;
+    background-color: #FFFFFF;
+    color: #102A43;
+    border: 1px solid #BCCCDC;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 9.5pt;
+    line-height: 1.45;
+    overflow-y: auto;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    user-select: text;
+  }
+  .qtextedit:empty::before {
+    content: attr(data-placeholder);
+    color: #829AB1;
+  }
+  .table-panel {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 320px;
+    height: 100%;
+    overflow: hidden;
+  }
+  .qtable-container {
+    flex: 1;
+    background-color: #FFFFFF;
+    border: 1px solid #BCCCDC;
+    border-radius: 6px;
+    overflow: auto;
+    position: relative;
+  }
+  table.qtablewidget {
+    border-collapse: collapse;
+    width: max-content;
+    min-width: 100%;
+    font-size: 8.8pt;
+    user-select: text;
+  }
+  table.qtablewidget th {
+    position: sticky;
+    top: 0;
+    background-color: #F0F4F8;
+    color: #243B53;
+    font-weight: 700;
+    border-right: 1px solid #D9E2EC;
+    border-bottom: 2px solid #BCCCDC;
+    padding: 5px 8px;
+    text-align: center;
+    white-space: nowrap;
+    z-index: 2;
+  }
+  table.qtablewidget th:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    background-color: #E2E8F0;
+  }
+  table.qtablewidget td {
+    border-right: 1px solid #D9E2EC;
+    border-bottom: 1px solid #D9E2EC;
+    padding: 4px 8px;
+    white-space: nowrap;
+    color: #1F2933;
+  }
+  table.qtablewidget td.align-center {
+    text-align: center;
+    font-weight: 600;
+    background-color: #F8FAFC;
+    position: sticky;
+    left: 0;
+    z-index: 1;
+  }
+  table.qtablewidget td.align-right {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  table.qtablewidget tr:hover td {
+    background-color: #F0F7FF;
+  }
+  table.qtablewidget tr.total-row td {
+    background-color: #EBF8FF;
+    font-weight: 700;
+    color: #102A43;
+  }
+
+  /* QMessageBox Modal Dialog */
+  .qmessagebox-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(15, 23, 42, 0.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+  }
+  .qmessagebox-backdrop.visible {
+    display: flex;
+  }
+  .qmessagebox {
+    background-color: #F8FAFC;
+    border: 1px solid #64748B;
+    border-radius: 8px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+    min-width: 340px;
+    max-width: 480px;
+    overflow: hidden;
+  }
+  .qmessagebox-header {
+    background-color: #243B53;
+    color: #FFFFFF;
+    padding: 7px 12px;
+    font-weight: 700;
+    font-size: 9.5pt;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .qmessagebox-header.error {
+    background-color: #D92D20;
+  }
+  .qmessagebox-body {
+    padding: 18px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #1F2933;
+    font-size: 9.5pt;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    user-select: text;
+  }
+  .qmessagebox-icon {
+    font-size: 22pt;
+    flex-shrink: 0;
+  }
+  .qmessagebox-footer {
+    padding: 8px 14px 12px;
+    display: flex;
+    justify-content: flex-end;
+    background-color: #EEF2F6;
+    border-top: 1px solid #D9E2EC;
+  }
+</style>
+</head>
+<body>
+
+<div class="window-titlebar">
+  <div class="title-text">
+    <span>SVC Data Pro-Analyzer Excel V3.0 ⚡ (Authored by JH Lee)</span>
+  </div>
+  <span class="title-badge">Web Edition</span>
+</div>
+
+<div class="main-container" id="main_splitter">
+  <!-- 좌측 패널: 컨트롤 및 설정 -->
+  <div class="control-scroll" id="left_panel">
+    <div class="control-panel">
+      <!-- 1. 데이터 파일 로드 -->
+      <div class="qgroupbox">
+        <span class="qgroupbox-title">1. 데이터 파일 로드</span>
+        <input type="file" id="input_svc_file" accept=".xlsx,.xls,.csv" style="display:none">
+        <button type="button" class="qbutton" id="btn_load_svc">서비스 데이터 (Excel) 로드</button>
+        <div class="status-label" id="lbl_svc_status">대기 중...</div>
+
+        <input type="file" id="input_prod_file" accept=".xlsx,.xls,.csv" style="display:none">
+        <button type="button" class="qbutton" id="btn_load_prod">생산수량 데이터 (Excel) 로드</button>
+        <div class="status-label" id="lbl_prod_status">대기 중...</div>
+      </div>
+
+      <!-- 2. 분석 조건 설정 -->
+      <div class="qgroupbox">
+        <span class="qgroupbox-title">2. 분석 조건 설정</span>
+
+        <div class="qlabel">완료월(CLOSE_DT) 기준 열:</div>
+        <select class="qcombobox" id="combo_close_col"></select>
+
+        <div class="qlabel">분석기간 선택(CLOSE):</div>
+        <div class="hbox">
+          <select class="qcombobox" id="combo_close_start_month"></select>
+          <span>~</span>
+          <select class="qcombobox" id="combo_close_end_month"></select>
+        </div>
+
+        <div class="qlabel">생산월(PROD_DT) 기준 열:</div>
+        <select class="qcombobox" id="combo_prod_col"></select>
+
+        <div class="qlabel">분석기간 선택(PROD):</div>
+        <div class="hbox">
+          <select class="qcombobox" id="combo_start_month"></select>
+          <span>~</span>
+          <select class="qcombobox" id="combo_end_month"></select>
+        </div>
+
+        <div class="qlabel">분석 대상 부품 열(필터 1):</div>
+        <select class="qcombobox" id="combo_part_col"></select>
+
+        <div class="qlabel">분석 대상 부품 열(필터 2):</div>
+        <select class="qcombobox" id="combo_part_col_2"></select>
+
+        <div class="qlabel">분석 기준 주기:</div>
+        <div class="radio-group">
+          <label><input type="radio" name="time_group" id="radio_monthly" value="monthly" checked> 월별 분석</label>
+          <label><input type="radio" name="time_group" id="radio_yearly" value="yearly"> 년별 분석</label>
+        </div>
+
+        <div class="qlabel">데이터 분석 유형:</div>
+        <select class="qcombobox" id="combo_analysis_type">
+          <option value="0">순간 서비스 건 분석</option>
+          <option value="1">누적 서비스 건 분석</option>
+          <option value="2">순간 고장률 분석 (Hazard)</option>
+          <option value="3">누적 고장률 분석 (CDF)</option>
+          <option value="4">Distribution_Analysis_1(Survival)</option>
+          <option value="5">Distribution_Analysis_2(Production)</option>
+        </select>
+      </div>
+
+      <!-- 3. 상세 필터 (다중 선택: Ctrl/Shift 클릭) -->
+      <div class="qgroupbox">
+        <span class="qgroupbox-title">3. 상세 필터 (다중 선택: Ctrl/Shift 클릭)</span>
+
+        <div class="qlabel">
+          <span>분석 대상 부품 선택(필터 1):</span>
+          <span class="mini-actions">
+            <button type="button" class="mini-btn" onclick="selectAllList('list_components', true)">전체선택</button>
+            <button type="button" class="mini-btn" onclick="selectAllList('list_components', false)">해제</button>
+          </span>
+        </div>
+        <div class="qlistwidget" id="list_components" tabindex="0"></div>
+
+        <div class="qlabel">
+          <span>분석 대상 부품 선택(필터 2):</span>
+          <span class="mini-actions">
+            <button type="button" class="mini-btn" onclick="selectAllList('list_components_2', true)">전체선택</button>
+            <button type="button" class="mini-btn" onclick="selectAllList('list_components_2', false)">해제</button>
+          </span>
+        </div>
+        <div class="qlistwidget" id="list_components_2" tabindex="0"></div>
+
+        <div class="qlabel">
+          <span id="lbl_plot_target">그래프 플로팅 대상 생산월:</span>
+          <span class="mini-actions">
+            <button type="button" class="mini-btn" onclick="selectAllList('list_plot_months', true)">전체선택</button>
+            <button type="button" class="mini-btn" onclick="selectAllList('list_plot_months', false)">해제</button>
+          </span>
+        </div>
+        <div class="qlistwidget" id="list_plot_months" tabindex="0"></div>
+      </div>
+
+      <!-- 4. 분석 실행 및 종료 버튼 -->
+      <button type="button" class="qbutton" id="btn_run_analysis" disabled>설정 적용 및 분석 실행</button>
+      <button type="button" class="qbutton" id="btn_exit">❌ 종료</button>
+    </div>
+  </div>
+
+  <!-- 좌우 분할 스플리터 핸들 -->
+  <div class="splitter-handle" id="splitter_handle" title="드래그하여 패널 너비 조절"></div>
+
+  <!-- 우측 패널: 시각화 및 데이터 테이블 -->
+  <div class="visual-panel">
+    <!-- 상단 분포 모델 선택 바 -->
+    <div class="dist-select-bar">
+      <span class="qlabel" id="lbl_distribution_model">Distribution Model:</span>
+      <select class="qcombobox" id="combo_distribution_model">
+        <option value="적합도 검증(AD)" selected>적합도 검증(AD)</option>
+        <option value="Weibull">Weibull</option>
+        <option value="Log-Normal">Log-Normal</option>
+        <option value="Exponential">Exponential</option>
+        <option value="Normal">Normal</option>
+        <option value="Kaplan_Meier">Kaplan_Meier</option>
+      </select>
+
+      <span class="qlabel">optimizer:</span>
+      <select class="qcombobox" id="combo_fit_optimizer">
+        <option value="적용 안함" selected>적용 안함</option>
+        <option value="default">default</option>
+        <option value="best">best</option>
+      </select>
+
+      <span class="qlabel">method:</span>
+      <select class="qcombobox" id="combo_fit_method">
+        <option value="MLE" selected>MLE</option>
+        <option value="LS">LS</option>
+      </select>
+
+      <span class="qlabel">CI:</span>
+      <select class="qcombobox" id="combo_fit_ci">
+        <option value="0.6" selected>0.6</option>
+        <option value="0.8">0.8</option>
+        <option value="0.9">0.9</option>
+        <option value="0.95">0.95</option>
+      </select>
+    </div>
+
+    <!-- 상단 윈도우: 네비게이션 툴바 + 차트 캔버스 (stretch=3) -->
+    <div class="chart-section">
+      <div class="mpl-toolbar">
+        <button type="button" class="mpl-toolbtn" id="tool_home" title="원래 뷰로 복원 (Home)">🏠 Home</button>
+        <button type="button" class="mpl-toolbtn" id="tool_back" title="이전 뷰 (Back)">⬅</button>
+        <button type="button" class="mpl-toolbtn" id="tool_forward" title="다음 뷰 (Forward)">➡</button>
+        <button type="button" class="mpl-toolbtn" id="tool_pan" title="패닝 이동 (Pan)">✋ Pan</button>
+        <button type="button" class="mpl-toolbtn" id="tool_zoom" title="영역 확대 (Zoom)">🔍 Zoom</button>
+        <button type="button" class="mpl-toolbtn" id="tool_save" title="그래프 이미지 저장 (Save PNG)">💾 Save</button>
+        <span class="mpl-coords" id="mpl_coords"></span>
+      </div>
+      <div class="canvas-wrapper" id="canvas_wrapper">
+        <canvas id="chart_canvas"></canvas>
+      </div>
+    </div>
+
+    <!-- 하단 윈도우: Data Analysis (stretch=1) & 피벗 분석 데이터 테이블 (stretch=2) -->
+    <div class="bottom-section">
+      <div class="analysis-panel">
+        <div class="panel-header">
+          <span class="qlabel">Data Analysis</span>
+        </div>
+        <div class="qtextedit" id="txt_distribution_result" data-placeholder="Distribution Analysis 결과가 여기에 표시됩니다."></div>
+      </div>
+
+      <div class="table-panel">
+        <div class="panel-header">
+          <span class="qlabel">피벗 분석 데이터 테이블</span>
+          <button type="button" class="qbutton" id="btn_export" disabled style="padding: 5px 12px;">CSV 내보내기</button>
+        </div>
+        <div class="qtable-container" id="table_container">
+          <table class="qtablewidget" id="table_widget">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- QMessageBox 모달 다이얼로그 -->
+<div class="qmessagebox-backdrop" id="msgbox_backdrop">
+  <div class="qmessagebox" role="dialog" aria-modal="true">
+    <div class="qmessagebox-header" id="msgbox_title">알림</div>
+    <div class="qmessagebox-body">
+      <span class="qmessagebox-icon" id="msgbox_icon">⚠️</span>
+      <div id="msgbox_text"></div>
+    </div>
+    <div class="qmessagebox-footer">
+      <button type="button" class="qbutton" id="msgbox_ok" style="min-width: 80px;">확인</button>
+    </div>
+  </div>
+</div>
+<script>
+// ==============================================================================
+// 전역 상태 변수 초기화 (01_SVC_Pro_Analyzer_2_excel.py의 ReliabilityDashboard 대응)
+// ==============================================================================
+const appState = {
+  df_svc_raw: null,          // 원본 서비스 데이터 배열 (각 행은 {colName: strVal})
+  svc_columns: [],           // 서비스 데이터 컬럼명 리스트
+  df_svc: null,              // 전처리 완료된 유효 서비스 데이터
+  prod_qty_map: {},          // { 'YYYYMM': number }
+  max_service_month: "000000",
+  filtered_months: [],
+  calculated_pivot: null,    // { mode: 'pivot'|'dist', headers: [], rows: [] }
+  distribution_context: null,
+  signals_blocked: false,
+  list_anchor: {
+    list_components: 0,
+    list_components_2: 0,
+    list_plot_months: 0
+  },
+  is_dragging_list: false,
+  drag_list_id: null
+};
+
+// ==============================================================================
+// QMessageBox 모달 출력 헬퍼
+// ==============================================================================
+function showMessageBox(title, message, type = "warning") {
+  const backdrop = document.getElementById("msgbox_backdrop");
+  const titleEl = document.getElementById("msgbox_title");
+  const iconEl = document.getElementById("msgbox_icon");
+  const textEl = document.getElementById("msgbox_text");
+
+  titleEl.textContent = title;
+  if (type === "error" || type === "critical") {
+    titleEl.className = "qmessagebox-header error";
+    iconEl.textContent = "❌";
+  } else if (type === "info") {
+    titleEl.className = "qmessagebox-header";
+    iconEl.textContent = "ℹ️";
+  } else {
+    titleEl.className = "qmessagebox-header";
+    iconEl.textContent = "⚠️";
+  }
+  textEl.textContent = message;
+  backdrop.classList.add("visible");
+}
+
+document.getElementById("msgbox_ok").addEventListener("click", () => {
+  document.getElementById("msgbox_backdrop").classList.remove("visible");
+});
+
+// ==============================================================================
+// QListWidget 다중 선택 (Ctrl / Shift / Drag 클릭) 구현
+// ==============================================================================
+function populateListWidget(listId, items, selectAll = true) {
+  const container = document.getElementById(listId);
+  container.innerHTML = "";
+  const frag = document.createDocumentFragment();
+  items.forEach((text, idx) => {
+    const div = document.createElement("div");
+    div.className = "qlist-item" + (selectAll ? " selected" : "");
+    div.dataset.index = String(idx);
+    div.dataset.value = String(text);
+    div.textContent = String(text);
+    frag.appendChild(div);
+  });
+  container.appendChild(frag);
+  appState.list_anchor[listId] = 0;
+}
+
+function selectAllList(listId, select = true) {
+  const container = document.getElementById(listId);
+  if (!container) return;
+  const items = container.querySelectorAll(".qlist-item");
+  items.forEach(el => {
+    if (select) el.classList.add("selected");
+    else el.classList.remove("selected");
+  });
+}
+
+function getSelectedListItems(listId) {
+  const container = document.getElementById(listId);
+  if (!container) return [];
+  const selected = [];
+  container.querySelectorAll(".qlist-item.selected").forEach(el => {
+    selected.push(el.dataset.value);
+  });
+  return selected;
+}
+
+function setSelectedListValues(listId, valuesArray) {
+  const container = document.getElementById(listId);
+  if (!container) return;
+  const normSet = new Set(valuesArray.map(v => normalizeFilterChar(String(v))));
+  container.querySelectorAll(".qlist-item").forEach(el => {
+    const val = el.dataset.value;
+    if (normSet.has(normalizeFilterChar(val))) {
+      el.classList.add("selected");
+    } else {
+      el.classList.remove("selected");
+    }
+  });
+}
+
+function setupListWidgetInteractions(listId) {
+  const container = document.getElementById(listId);
+  container.addEventListener("mousedown", (e) => {
+    const item = e.target.closest(".qlist-item");
+    if (!item) return;
+    e.preventDefault();
+    const idx = parseInt(item.dataset.index, 10);
+    const allItems = Array.from(container.querySelectorAll(".qlist-item"));
+
+    if (e.shiftKey) {
+      const anchor = appState.list_anchor[listId] ?? 0;
+      const start = Math.min(anchor, idx);
+      const end = Math.max(anchor, idx);
+      if (!e.ctrlKey && !e.metaKey) {
+        allItems.forEach(el => el.classList.remove("selected"));
+      }
+      for (let i = start; i <= end; i++) {
+        if (allItems[i]) allItems[i].classList.add("selected");
+      }
+    } else if (e.ctrlKey || e.metaKey) {
+      item.classList.toggle("selected");
+      appState.list_anchor[listId] = idx;
+    } else {
+      allItems.forEach(el => el.classList.remove("selected"));
+      item.classList.add("selected");
+      appState.list_anchor[listId] = idx;
+      appState.is_dragging_list = true;
+      appState.drag_list_id = listId;
+    }
+  });
+
+  container.addEventListener("mouseover", (e) => {
+    if (!appState.is_dragging_list || appState.drag_list_id !== listId) return;
+    const item = e.target.closest(".qlist-item");
+    if (!item) return;
+    const idx = parseInt(item.dataset.index, 10);
+    const anchor = appState.list_anchor[listId] ?? 0;
+    const start = Math.min(anchor, idx);
+    const end = Math.max(anchor, idx);
+    const allItems = Array.from(container.querySelectorAll(".qlist-item"));
+    allItems.forEach((el, i) => {
+      if (i >= start && i <= end) el.classList.add("selected");
+      else el.classList.remove("selected");
+    });
+  });
+}
+
+window.addEventListener("mouseup", () => {
+  appState.is_dragging_list = false;
+  appState.drag_list_id = null;
+});
+
+["list_components", "list_components_2", "list_plot_months"].forEach(setupListWidgetInteractions);
+
+// ==============================================================================
+// 문자열/기호 정규화 헬퍼 ('○' <-> 'O' 및 컬럼명 공백 유연 매칭 지원)
+// ==============================================================================
+function normalizeFilterChar(str) {
+  if (str === null || str === undefined) return "";
+  const s = String(str).trim();
+  if (s === "○" || s === "◯" || s === "〇") return "O";
+  return s;
+}
+
+function cleanYYYYMM(val) {
+  if (val === null || val === undefined) return "";
+  let s = String(val).trim().replace(/\D/g, "");
+  if (s.length === 4) s = "20" + s;
+  if (s.length >= 6) return s.slice(0, 6);
+  return "";
+}
+
+function isExcelFileName(fileName) {
+  if (!fileName) return false;
+  const lower = fileName.toLowerCase().trim();
+  return lower.endsWith(".xlsx") || lower.endsWith(".xls");
+}
+
+// ==============================================================================
+// 1. 데이터 파일 로드 (Excel 전용 체크 및 CSV 로드 시 에러 메시지 출력)
+// ==============================================================================
+document.getElementById("btn_load_svc").addEventListener("click", () => {
+  const inp = document.getElementById("input_svc_file");
+  inp.value = "";
+  inp.click();
+});
+
+document.getElementById("btn_load_prod").addEventListener("click", () => {
+  const inp = document.getElementById("input_prod_file");
+  inp.value = "";
+  inp.click();
+});
+
+document.getElementById("input_svc_file").addEventListener("change", (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  loadSvcDataFile(file);
+});
+
+document.getElementById("input_prod_file").addEventListener("change", (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  loadProdDataFile(file);
+});
+
+// ==============================================================================
+// 고속 내장 XLSX 파서 (Offline/Online 겸용, DecompressionStream + SheetJS 호환)
+// ==============================================================================
+function decodeXmlEntities(str) {
+  if (!str || !str.includes("&")) return str;
+  return str
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(parseInt(dec, 10)))
+    .replace(/&amp;/g, "&");
+}
+
+async function decompressDeflateRaw(compressedBytes) {
+  const ds = new DecompressionStream("deflate-raw");
+  const writer = ds.writable.getWriter();
+  writer.write(compressedBytes);
+  writer.close();
+  const reader = ds.readable.getReader();
+  const chunks = [];
+  let totalLen = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    totalLen += value.byteLength;
+  }
+  const out = new Uint8Array(totalLen);
+  let offset = 0;
+  for (let i = 0; i < chunks.length; i++) {
+    out.set(chunks[i], offset);
+    offset += chunks[i].byteLength;
+  }
+  return out;
+}
+
+async function parseXlsxBufferToAOA(arrayBuffer) {
+  // SheetJS(XLSX)가 로드되어 있고 파일 크기가 작으면 SheetJS도 사용 가능하지만,
+  // 대용량(32,922행) 속도 및 오프라인 호환성을 위해 내장 ZIP+XML 파서를 우선 수행하고 실패 시 SheetJS 폴백
+  try {
+    const bytes = new Uint8Array(arrayBuffer);
+    const view = new DataView(arrayBuffer);
+    // Find End of Central Directory (EOCD: 0x06054b50)
+    let eocdPos = -1;
+    const minPos = Math.max(0, bytes.length - 65557);
+    for (let i = bytes.length - 22; i >= minPos; i--) {
+      if (view.getUint32(i, true) === 0x06054b50) {
+        eocdPos = i;
+        break;
+      }
+    }
+    if (eocdPos < 0) throw new Error("유효한 엑셀(ZIP) 포맷이 아닙니다.");
+
+    const cdCount = view.getUint16(eocdPos + 10, true);
+    const cdOffset = view.getUint32(eocdPos + 16, true);
+    const entries = {};
+    let pos = cdOffset;
+    const dec = new TextDecoder("utf-8");
+
+    for (let i = 0; i < cdCount; i++) {
+      if (view.getUint32(pos, true) !== 0x02014b50) break;
+      const compMethod = view.getUint16(pos + 10, true);
+      const compSize = view.getUint32(pos + 20, true);
+      const fnLen = view.getUint16(pos + 28, true);
+      const extraLen = view.getUint16(pos + 30, true);
+      const commentLen = view.getUint16(pos + 32, true);
+      const localHeaderOffset = view.getUint32(pos + 42, true);
+      const fileName = dec.decode(bytes.subarray(pos + 46, pos + 46 + fnLen));
+      entries[fileName] = { compMethod, compSize, localHeaderOffset };
+      pos += 46 + fnLen + extraLen + commentLen;
+    }
+
+    async function readEntryText(entryName) {
+      const info = entries[entryName];
+      if (!info) return null;
+      const lPos = info.localHeaderOffset;
+      const lFnLen = view.getUint16(lPos + 26, true);
+      const lExtraLen = view.getUint16(lPos + 28, true);
+      const dataStart = lPos + 30 + lFnLen + lExtraLen;
+      const compSlice = bytes.subarray(dataStart, dataStart + info.compSize);
+      const rawBytes = (info.compMethod === 0) ? compSlice : await decompressDeflateRaw(compSlice);
+      return dec.decode(rawBytes);
+    }
+
+    // 1. sharedStrings.xml 파싱
+    const sharedStrings = [];
+    if (entries["xl/sharedStrings.xml"]) {
+      const sstXml = await readEntryText("xl/sharedStrings.xml");
+      let siStart = 0;
+      while (true) {
+        const idxSi = sstXml.indexOf("<si", siStart);
+        if (idxSi < 0) break;
+        const idxSiEnd = sstXml.indexOf("</si>", idxSi);
+        if (idxSiEnd < 0) break;
+        const siBlock = sstXml.slice(idxSi, idxSiEnd);
+        let textVal = "";
+        let tSearch = 0;
+        while (true) {
+          const tOpen = siBlock.indexOf("<t", tSearch);
+          if (tOpen < 0) break;
+          const nextChar = siBlock.charCodeAt(tOpen + 2);
+          if (nextChar !== 62 && nextChar !== 32 && nextChar !== 47) { // '>', ' ', '/'
+            tSearch = tOpen + 2;
+            continue;
+          }
+          const tTagEnd = siBlock.indexOf(">", tOpen);
+          if (tTagEnd < 0) break;
+          if (siBlock.charCodeAt(tTagEnd - 1) === 47) { // self-closing <t/>
+            tSearch = tTagEnd + 1;
+            continue;
+          }
+          const tContentStart = tTagEnd + 1;
+          const tClose = siBlock.indexOf("</t>", tContentStart);
+          if (tClose < 0) break;
+          textVal += decodeXmlEntities(siBlock.slice(tContentStart, tClose));
+          tSearch = tClose + 4;
+        }
+        sharedStrings.push(textVal);
+        siStart = idxSiEnd + 5;
+      }
+    }
+
+    // 2. 첫 번째 시트 찾기 (xl/worksheets/sheet1.xml 등)
+    let sheetEntry = "xl/worksheets/sheet1.xml";
+    if (!entries[sheetEntry]) {
+      sheetEntry = Object.keys(entries).find(k => k.startsWith("xl/worksheets/sheet") && k.endsWith(".xml"));
+    }
+    if (!sheetEntry) throw new Error("워크시트를 찾을 수 없습니다.");
+
+    const sheetXml = await readEntryText(sheetEntry);
+    const aoa = [];
+    let rowSearch = sheetXml.indexOf("<sheetData");
+    if (rowSearch < 0) rowSearch = 0;
+
+    while (true) {
+      const rOpen = sheetXml.indexOf("<row", rowSearch);
+      if (rOpen < 0) break;
+      const rTagEnd = sheetXml.indexOf(">", rOpen);
+      if (rTagEnd < 0) break;
+      if (sheetXml.charCodeAt(rTagEnd - 1) === 47) { // self-closing <row .../>
+        rowSearch = rTagEnd + 1;
+        continue;
+      }
+      const rClose = sheetXml.indexOf("</row>", rTagEnd);
+      if (rClose < 0) break;
+
+      const rowArr = [];
+      let cPos = rTagEnd + 1;
+      let nextColIdx = 0;
+
+      while (cPos < rClose) {
+        const cOpen = sheetXml.indexOf("<c", cPos);
+        if (cOpen < 0 || cOpen >= rClose) break;
+        const cTagEnd = sheetXml.indexOf(">", cOpen);
+        if (cTagEnd < 0 || cTagEnd >= rClose) break;
+        const cTag = sheetXml.slice(cOpen + 2, cTagEnd);
+
+        // 열 인덱스 계산 (r="AB12")
+        let colIdx = nextColIdx;
+        const rAttrIdx = cTag.indexOf('r="');
+        if (rAttrIdx >= 0) {
+          let p = rAttrIdx + 3;
+          let cNum = 0;
+          while (p < cTag.length) {
+            const code = cTag.charCodeAt(p);
+            if (code >= 65 && code <= 90) {
+              cNum = cNum * 26 + (code - 64);
+              p++;
+            } else {
+              break;
+            }
+          }
+          if (cNum > 0) colIdx = cNum - 1;
+        }
+
+        // 셀 타입 확인 (t="s", t="str", t="inlineStr" 등)
+        let cType = "";
+        const tAttrIdx = cTag.indexOf('t="');
+        if (tAttrIdx >= 0) {
+          const tEnd = cTag.indexOf('"', tAttrIdx + 3);
+          if (tEnd >= 0) cType = cTag.slice(tAttrIdx + 3, tEnd);
+        }
+
+        if (sheetXml.charCodeAt(cTagEnd - 1) === 47) {
+          // 빈 셀 <c .../>
+          while (rowArr.length <= colIdx) rowArr.push(null);
+          nextColIdx = colIdx + 1;
+          cPos = cTagEnd + 1;
+          continue;
+        }
+
+        const cClose = sheetXml.indexOf("</c>", cTagEnd);
+        if (cClose < 0 || cClose > rClose) break;
+        const cellInner = sheetXml.slice(cTagEnd + 1, cClose);
+
+        let cellVal = null;
+        if (cType === "inlineStr") {
+          const tOpen = cellInner.indexOf("<t");
+          if (tOpen >= 0) {
+            const tStart = cellInner.indexOf(">", tOpen) + 1;
+            const tClose = cellInner.indexOf("</t>", tStart);
+            if (tClose >= 0) cellVal = decodeXmlEntities(cellInner.slice(tStart, tClose));
+          }
+        } else {
+          const vOpen = cellInner.indexOf("<v>");
+          if (vOpen >= 0) {
+            const vClose = cellInner.indexOf("</v>", vOpen + 3);
+            if (vClose >= 0) {
+              const rawV = cellInner.slice(vOpen + 3, vClose);
+              if (cType === "s") {
+                const sIdx = parseInt(rawV, 10);
+                cellVal = sharedStrings[sIdx] !== undefined ? sharedStrings[sIdx] : rawV;
+              } else {
+                cellVal = decodeXmlEntities(rawV);
+              }
+            }
+          }
+        }
+
+        while (rowArr.length < colIdx) rowArr.push(null);
+        rowArr[colIdx] = cellVal;
+        nextColIdx = colIdx + 1;
+        cPos = cClose + 4;
+      }
+
+      aoa.push(rowArr);
+      rowSearch = rClose + 6;
+    }
+    return aoa;
+  } catch (nativeErr) {
+    if (typeof XLSX !== "undefined") {
+      const data = new Uint8Array(arrayBuffer);
+      const wb = XLSX.read(data, { type: "array", raw: false, defval: null });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      return XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: null });
+    }
+    throw nativeErr;
+  }
+}
+
+function loadSvcDataFile(file) {
+  const statusEl = document.getElementById("lbl_svc_status");
+  if (!isExcelFileName(file.name)) {
+    statusEl.textContent = "엑셀 파일로 데이터 로드 바랍니다";
+    statusEl.className = "status-label error";
+    showMessageBox("오류", "엑셀 파일로 데이터 로드 바랍니다", "error");
+    return;
+  }
+
+  statusEl.textContent = "엑셀 파일 읽는 중...";
+  statusEl.className = "status-label";
+
+  const reader = new FileReader();
+  reader.onload = async function(evt) {
+    try {
+      const aoa = await parseXlsxBufferToAOA(evt.target.result);
+      if (!aoa || aoa.length < 2) {
+        throw new Error("유효한 서비스 데이터가 없습니다.");
+      }
+
+      const headers = aoa[0].map((h, i) => (h !== null && h !== undefined && String(h).trim() !== "") ? String(h).trim() : `Unnamed: ${i}`);
+      const colIndexMap = {};
+      headers.forEach((h, idx) => { colIndexMap[h] = idx; });
+
+      const rows = [];
+      for (let r = 1; r < aoa.length; r++) {
+        const rowArr = aoa[r];
+        if (!rowArr || rowArr.length === 0) continue;
+        let hasAny = false;
+        for (let c = 0; c < rowArr.length; c++) {
+          if (rowArr[c] !== null && rowArr[c] !== undefined && rowArr[c] !== "") {
+            hasAny = true;
+            break;
+          }
+        }
+        if (hasAny) rows.push(rowArr);
+      }
+
+      appState.svc_columns = headers;
+      appState.col_index_map = colIndexMap;
+      appState.df_svc_raw = rows;
+      statusEl.textContent = `로드 완료: ${rows.length.toLocaleString()} 건`;
+      statusEl.className = "status-label loaded";
+
+      populateColumnCombos();
+      checkDependencies();
+    } catch (err) {
+      statusEl.textContent = "로드 실패";
+      statusEl.className = "status-label error";
+      showMessageBox("오류", `SVC 데이터를 읽는 중 오류가 발생했습니다:\n${err.message}`, "error");
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function loadProdDataFile(file) {
+  const statusEl = document.getElementById("lbl_prod_status");
+  if (!isExcelFileName(file.name)) {
+    statusEl.textContent = "엑셀 파일로 데이터 로드 바랍니다";
+    statusEl.className = "status-label error";
+    showMessageBox("오류", "엑셀 파일로 데이터 로드 바랍니다", "error");
+    return;
+  }
+
+  statusEl.textContent = "엑셀 파일 읽는 중...";
+  statusEl.className = "status-label";
+
+  const reader = new FileReader();
+  reader.onload = async function(evt) {
+    try {
+      const aoa = await parseXlsxBufferToAOA(evt.target.result);
+      if (!aoa || aoa.length < 2) {
+        throw new Error("생산수량 파일은 최소 2행(월명, 생산수량)이어야 합니다.");
+      }
+
+      const row0 = aoa[0];
+      const row1 = aoa[1];
+      const prodMap = {};
+      const len = Math.max(row0.length, row1.length);
+
+      for (let i = 0; i < len; i++) {
+        const m = cleanYYYYMM(row0[i]);
+        const qStr = String(row1[i] ?? "0").replace(/,/g, "").trim();
+        const qNum = parseFloat(qStr);
+        const q = Number.isFinite(qNum) ? Math.trunc(qNum) : 0;
+        if (m.length === 6) {
+          prodMap[m] = q;
+        }
+      }
+
+      appState.prod_qty_map = prodMap;
+      const monthCount = Object.keys(prodMap).length;
+      statusEl.textContent = `로드 완료: ${monthCount}개 월`;
+      statusEl.className = "status-label loaded";
+
+      checkDependencies();
+    } catch (err) {
+      statusEl.textContent = "로드 실패";
+      statusEl.className = "status-label error";
+      showMessageBox("오류", `생산 데이터를 읽는 중 오류가 발생했습니다:\n${err.message}`, "error");
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ==============================================================================
+// 2. 콤보박스 채우기 및 서비스 데이터 전처리
+// ==============================================================================
+function setSelectOptions(selectEl, items, defaultIndex = 0) {
+  selectEl.innerHTML = "";
+  const frag = document.createDocumentFragment();
+  items.forEach((item, idx) => {
+    const opt = document.createElement("option");
+    opt.value = String(item);
+    opt.textContent = String(item);
+    if (idx === defaultIndex) opt.selected = true;
+    frag.appendChild(opt);
+  });
+  selectEl.appendChild(frag);
+}
+
+function populateColumnCombos() {
+  if (!appState.df_svc_raw) return;
+  appState.signals_blocked = true;
+
+  const cols = appState.svc_columns;
+  const comboProd = document.getElementById("combo_prod_col");
+  const comboClose = document.getElementById("combo_close_col");
+  const comboPart1 = document.getElementById("combo_part_col");
+  const comboPart2 = document.getElementById("combo_part_col_2");
+
+  // 1) 생산월(PROD_DT) 자동 추론
+  let prodIdx = 0;
+  for (let i = 0; i < cols.length; i++) {
+    if (cols[i].toUpperCase().includes("PROD_DT") || cols[i].includes("생산월")) {
+      prodIdx = i;
+      break;
+    }
+  }
+
+  // 2) 완료월(CLOSE_DT) 자동 추론
+  let closeIdx = null;
+  for (let i = 0; i < cols.length; i++) {
+    if (cols[i].toUpperCase() === "CLOSE_RTN_DT_MONTH") {
+      closeIdx = i;
+      break;
+    }
+  }
+  if (closeIdx === null) {
+    for (let i = 0; i < cols.length; i++) {
+      if (cols[i].toUpperCase().includes("CLOSE") || cols[i].includes("완료") || cols[i].includes("처리")) {
+        closeIdx = i;
+        break;
+      }
+    }
+  }
+  if (closeIdx === null) closeIdx = 0;
+
+  // 3) 부품 컬럼 자동 추론
+  let partIdx = null;
+  for (let i = 0; i < cols.length; i++) {
+    if (cols[i].toUpperCase().includes("WORST") || cols[i].includes("부품") || cols[i].includes("중분류")) {
+      partIdx = i;
+      break;
+    }
+  }
+  if (partIdx === null) partIdx = 0;
+
+  setSelectOptions(comboProd, cols, prodIdx);
+  setSelectOptions(comboClose, cols, closeIdx);
+  setSelectOptions(comboPart1, cols, partIdx);
+  setSelectOptions(comboPart2, cols, partIdx);
+
+  appState.signals_blocked = false;
+
+  processServiceData();
+  updateComponentsList();
+  updateComponentsList2();
+}
+
+function processServiceData() {
+  if (!appState.df_svc_raw) return;
+
+  const prodCol = resolveColumnName(document.getElementById("combo_prod_col").value);
+  let closeCol = resolveColumnName(document.getElementById("combo_close_col").value);
+
+  if (!closeCol) {
+    const possible = ["CLOSE_RTN_DT_MONTH", "처리일자", "접수일자", "발생월", "CLOSE"];
+    for (const pc of possible) {
+      const matched = appState.svc_columns.find(c => c.toUpperCase().includes(pc) || c.includes(pc));
+      if (matched) {
+        closeCol = matched;
+        break;
+      }
+    }
+    if (!closeCol && appState.svc_columns.length > 0) {
+      closeCol = appState.svc_columns[appState.svc_columns.length - 1];
+    }
+  }
+
+  const prodIdx = appState.col_index_map[prodCol];
+  const closeIdx = appState.col_index_map[closeCol];
+  const processed = [];
+  let maxServiceMonth = "000000";
+
+  for (let i = 0; i < appState.df_svc_raw.length; i++) {
+    const rowArr = appState.df_svc_raw[i];
+    const rawProd = rowArr[prodIdx];
+    const rawClose = rowArr[closeIdx];
+    if (rawProd === null || rawProd === undefined || rawClose === null || rawClose === undefined) continue;
+
+    const prodYM = cleanYYYYMM(rawProd);
+    const closeYM = cleanYYYYMM(rawClose);
+    if (prodYM.length < 6 || closeYM.length < 6) continue;
+
+    const pYear = parseInt(prodYM.slice(0, 4), 10);
+    const pMonth = parseInt(prodYM.slice(4, 6), 10);
+    const cYear = parseInt(closeYM.slice(0, 4), 10);
+    const cMonth = parseInt(closeYM.slice(4, 6), 10);
+    if (!Number.isFinite(pYear) || !Number.isFinite(pMonth) || !Number.isFinite(cYear) || !Number.isFinite(cMonth)) continue;
+
+    const usageMonths = (cYear - pYear) * 12 + (cMonth - pMonth) + 1;
+    if (usageMonths >= 1) {
+      processed.push({
+        cells: rowArr,
+        PROD_YYYYMM: prodYM,
+        CLOSE_YYYYMM: closeYM,
+        "사용개월": usageMonths
+      });
+      if (closeYM > maxServiceMonth) {
+        maxServiceMonth = closeYM;
+      }
+    }
+  }
+
+  appState.df_svc = processed;
+  appState.max_service_month = maxServiceMonth;
+  updateDateRanges();
+}
+
+function updateDateRanges() {
+  if (!appState.df_svc || Object.keys(appState.prod_qty_map).length === 0) return;
+
+  appState.signals_blocked = true;
+
+  // 1) CLOSE 분석기간 콤보박스 업데이트
+  const closeSet = new Set();
+  for (let i = 0; i < appState.df_svc.length; i++) {
+    if (appState.df_svc[i].CLOSE_YYYYMM) closeSet.add(appState.df_svc[i].CLOSE_YYYYMM);
+  }
+  const closeMonths = Array.from(closeSet).sort();
+  const comboCloseStart = document.getElementById("combo_close_start_month");
+  const comboCloseEnd = document.getElementById("combo_close_end_month");
+  const prevCloseStart = comboCloseStart.value;
+  const prevCloseEnd = comboCloseEnd.value;
+
+  setSelectOptions(comboCloseStart, closeMonths, 0);
+  setSelectOptions(comboCloseEnd, closeMonths, Math.max(0, closeMonths.length - 1));
+  if (closeMonths.includes(prevCloseStart)) comboCloseStart.value = prevCloseStart;
+  if (closeMonths.includes(prevCloseEnd)) comboCloseEnd.value = prevCloseEnd;
+
+  // 2) PROD 분석기간 콤보박스 업데이트
+  const analysisMonths = Object.keys(appState.prod_qty_map).sort();
+  const comboStart = document.getElementById("combo_start_month");
+  const comboEnd = document.getElementById("combo_end_month");
+  const prevStart = comboStart.value;
+  const prevEnd = comboEnd.value;
+
+  setSelectOptions(comboStart, analysisMonths, 0);
+  setSelectOptions(comboEnd, analysisMonths, Math.max(0, analysisMonths.length - 1));
+  if (analysisMonths.includes(prevStart)) comboStart.value = prevStart;
+  if (analysisMonths.includes(prevEnd)) comboEnd.value = prevEnd;
+
+  appState.signals_blocked = false;
+  updatePlotMonthsList();
+}
+
+function resolveColumnName(colName) {
+  if (!appState.svc_columns || !colName) return colName;
+  if (appState.svc_columns.includes(colName)) return colName;
+  const noSpace = colName.replace(/\s+/g, "");
+  const found = appState.svc_columns.find(c => c.replace(/\s+/g, "") === noSpace);
+  return found || colName;
+}
+
+function updateComponentsList() {
+  if (!appState.df_svc) return;
+  const rawCol = document.getElementById("combo_part_col").value;
+  const partCol = resolveColumnName(rawCol);
+  if (!partCol) return;
+  const colIdx = appState.col_index_map[partCol];
+
+  const set = new Set();
+  for (let i = 0; i < appState.df_svc.length; i++) {
+    const v = appState.df_svc[i].cells[colIdx];
+    if (v !== null && v !== undefined && v !== "") {
+      set.add(String(v));
+    }
+  }
+  const uniqueParts = Array.from(set).sort();
+  populateListWidget("list_components", uniqueParts, true);
+}
+
+function updateComponentsList2() {
+  if (!appState.df_svc) return;
+  const rawCol = document.getElementById("combo_part_col_2").value;
+  const partCol2 = resolveColumnName(rawCol);
+  if (!partCol2) return;
+  const colIdx2 = appState.col_index_map[partCol2];
+
+  const set = new Set();
+  for (let i = 0; i < appState.df_svc.length; i++) {
+    const v = appState.df_svc[i].cells[colIdx2];
+    if (v !== null && v !== undefined && v !== "") {
+      set.add(String(v));
+    }
+  }
+  const uniqueParts2 = Array.from(set).sort();
+  populateListWidget("list_components_2", uniqueParts2, true);
+}
+
+function updatePlotListMode() {
+  const isYearly = document.getElementById("radio_yearly").checked;
+  const lbl = document.getElementById("lbl_plot_target");
+  lbl.textContent = isYearly ? "그래프 플로팅 대상 생산년:" : "그래프 플로팅 대상 생산월:";
+  updatePlotMonthsList();
+}
+
+function updatePlotMonthsList() {
+  if (appState.signals_blocked) return;
+  const comboStart = document.getElementById("combo_start_month");
+  const comboEnd = document.getElementById("combo_end_month");
+  const start = comboStart.value;
+  let end = comboEnd.value;
+  if (!start || !end) return;
+
+  if (start > end) {
+    comboEnd.value = start;
+    end = start;
+  }
+
+  const allMonths = Object.keys(appState.prod_qty_map).sort();
+  appState.filtered_months = allMonths.filter(m => m >= start && m <= end);
+
+  const isYearly = document.getElementById("radio_yearly").checked;
+  if (isYearly) {
+    const years = Array.from(new Set(appState.filtered_months.map(m => m.slice(0, 4)))).sort();
+    populateListWidget("list_plot_months", years, true);
+  } else {
+    populateListWidget("list_plot_months", appState.filtered_months, true);
+  }
+}
+
+function checkDependencies() {
+  if (appState.df_svc && Object.keys(appState.prod_qty_map).length > 0) {
+    document.getElementById("btn_run_analysis").disabled = false;
+    updateDateRanges();
+  }
+}
+
+function applyClosePeriodFilter(rows) {
+  if (!rows || rows.length === 0) return rows;
+  const comboStart = document.getElementById("combo_close_start_month");
+  const comboEnd = document.getElementById("combo_close_end_month");
+  const closeStart = comboStart.value;
+  let closeEnd = comboEnd.value;
+  if (!closeStart || !closeEnd) return rows;
+  if (closeStart > closeEnd) {
+    comboEnd.value = closeStart;
+    closeEnd = closeStart;
+  }
+  return rows.filter(r => r.CLOSE_YYYYMM >= closeStart && r.CLOSE_YYYYMM <= closeEnd);
+}
+
+function getFitOptions() {
+  const method = document.getElementById("combo_fit_method").value || "MLE";
+  let ci = parseFloat(document.getElementById("combo_fit_ci").value);
+  if (!Number.isFinite(ci)) ci = 0.6;
+  const optimizer = document.getElementById("combo_fit_optimizer").value || "적용 안함";
+  return { method, ci, optimizer };
+}
+
+// ==============================================================================
+// 3. 고정밀 신뢰성 통계/수학 엔진 (Python reliability & lifelines 100% 대응)
+// ==============================================================================
+function erfcCody(x) {
+  const z = Math.abs(x);
+  if (z <= 0.46875) {
+    const y = z * z;
+    const p = [
+      3.16112374387056560e00, 1.13864154151050156e02,
+      3.77485237685302021e02, 3.20937758913846947e03,
+      1.85777706184603153e-1
+    ];
+    const q = [
+      2.36012909523441209e01, 2.44024637934444173e02,
+      1.28261652607737228e03, 2.84423683343917062e03
+    ];
+    const num = (((p[4] * y + p[0]) * y + p[1]) * y + p[2]) * y + p[3];
+    const den = (((y + q[0]) * y + q[1]) * y + q[2]) * y + q[3];
+    return 1.0 - x * (num / den);
+  }
+  if (z <= 4.0) {
+    const p = [
+      5.64188496988670089e-1, 8.88314979438837594e00,
+      6.61191906371416295e01, 2.98635138197400131e02,
+      8.81952221241769090e02, 1.71204761263407058e03,
+      2.05107837782607147e03, 1.23033935479799725e03,
+      2.15311535474403846e-8
+    ];
+    const q = [
+      1.57449261107098347e01, 1.17693950891312499e02,
+      5.37181101862009858e02, 1.62138957456669019e03,
+      3.29079923573345963e03, 4.36261909014324716e03,
+      3.43936767414372164e03, 1.23033935480374942e03
+    ];
+    let num = p[8];
+    for (let i = 0; i < 8; i++) num = num * z + p[i];
+    let den = 1.0;
+    for (let i = 0; i < 8; i++) den = den * z + q[i];
+    const res = Math.exp(-z * z) * (num / den);
+    return x < 0 ? 2.0 - res : res;
+  }
+  const y = 1.0 / (z * z);
+  const p = [
+    3.05326634961232344e-1, 3.60344899949804439e-1,
+    1.25781726111229246e-1, 1.60837851487422766e-2,
+    6.58749161529837803e-4, 1.63153871373020978e-2
+  ];
+  const q = [
+    2.56852019228982242e00, 1.87295284992346047e00,
+    5.27905102951428412e-1, 6.05183413124413191e-2,
+    2.33520497626869185e-3
+  ];
+  const num2 = y * (((((p[5] * y + p[0]) * y + p[1]) * y + p[2]) * y + p[3]) * y + p[4]);
+  const den2 = ((((y + q[0]) * y + q[1]) * y + q[2]) * y + q[3]) * y + q[4];
+  let res = Math.exp(-z * z) * (0.56418958354775628695 - num2 / den2) / z;
+  if (z > 26.6) res = 0.0;
+  return x < 0 ? 2.0 - res : res;
+}
+
+function normCDF(x) {
+  return 0.5 * erfcCody(-x / Math.SQRT2);
+}
+
+function normSF(x) {
+  return 0.5 * erfcCody(x / Math.SQRT2);
+}
+
+function normPPF(p) {
+  if (p <= 0) return -Infinity;
+  if (p >= 1) return Infinity;
+  if (p === 0.5) return 0.0;
+  const a = [
+    -3.969683028665376e+01,  2.209460984245205e+02,
+    -2.759285104469687e+02,  1.383577518672690e+02,
+    -3.066479806614716e+01,  2.506628277459239e+00
+  ];
+  const b = [
+    -5.447609879822406e+01,  1.615858368580409e+02,
+    -1.556989798598866e+02,  6.680131188771972e+01,
+    -1.328068155288572e+01
+  ];
+  const c = [
+    -7.784894002430293e-03, -3.223964580411365e-01,
+    -2.400758277161838e+00, -2.549732539343734e+00,
+     4.374664141464968e+00,  2.938163982698783e+00
+  ];
+  const d = [
+     7.784695709041462e-03,  3.224671290700398e-01,
+     2.445134137142996e+00,  3.754408661907416e+00
+  ];
+  const pLow = 0.02425;
+  const pHigh = 1.0 - pLow;
+  let q, r, x;
+  if (p < pLow) {
+    q = Math.sqrt(-2.0 * Math.log(p));
+    x = (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
+        ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1.0);
+  } else if (p <= pHigh) {
+    q = p - 0.5;
+    r = q * q;
+    x = (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q /
+        (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1.0);
+  } else {
+    q = Math.sqrt(-2.0 * Math.log(1.0 - p));
+    x = -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
+         ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1.0);
+  }
+  const e = normCDF(x) - p;
+  const u = e * Math.sqrt(2.0 * Math.PI) * Math.exp(0.5 * x * x);
+  x = x - u / (1.0 + 0.5 * x * u);
+  return x;
+}
+
+function plottingPositionsGrouped(failGroups, censGroups, a = 0.3) {
+  const fSorted = failGroups.filter(g => g.t > 0 && g.count > 0).slice().sort((x, y) => x.t - y.t);
+  const rcSorted = censGroups.filter(g => g.t > 0 && g.count > 0).slice().sort((x, y) => x.t - y.t);
+
+  let nF = 0;
+  for (let i = 0; i < fSorted.length; i++) nF += fSorted[i].count;
+  let nRC = 0;
+  for (let i = 0; i < rcSorted.length; i++) nRC += rcSorted[i].count;
+  const n = nF + nRC;
+
+  const x = new Float64Array(nF);
+  const reverseI = new Float64Array(nF);
+  let rcIdx = 0;
+  let rcCum = 0;
+  let fCum = 0;
+
+  for (let i = 0; i < fSorted.length; i++) {
+    const tf = fSorted[i].t;
+    const cf = fSorted[i].count;
+    while (rcIdx < rcSorted.length && rcSorted[rcIdx].t < tf) {
+      rcCum += rcSorted[rcIdx].count;
+      rcIdx++;
+    }
+    for (let k = 0; k < cf; k++) {
+      const pos = rcCum + fCum;
+      reverseI[fCum] = n - pos;
+      x[fCum] = tf;
+      fCum++;
+    }
+  }
+
+  const leadingCens = n - reverseI[0];
+  const adjustedRank = new Float64Array(nF);
+  if (leadingCens > 0) {
+    let adj = 0.0;
+    for (let j = 0; j < nF; j++) {
+      const inc = (n + 1.0 - adj) / (1.0 + reverseI[j]);
+      adj += inc;
+      adjustedRank[j] = adj;
+    }
+  } else {
+    let adj = 1.0;
+    adjustedRank[0] = 1.0;
+    for (let j = 1; j < nF; j++) {
+      const inc = (n + 1.0 - adj) / (1.0 + reverseI[j]);
+      adj += inc;
+      adjustedRank[j] = adj;
+    }
+  }
+
+  const denom = n + 1.0 - 2.0 * a;
+  const y = new Float64Array(nF);
+  for (let j = 0; j < nF; j++) {
+    y[j] = (adjustedRank[j] - a) / denom;
+  }
+  return { x, y, n, nF, nRC };
+}
+
+function andersonDarlingCalc(fittedCdf, empiricalCdf) {
+  const n = fittedCdf.length;
+  const Z = Float64Array.from(fittedCdf).sort();
+  const FnZi = Float64Array.from(empiricalCdf).sort();
+  let total = 0.0;
+
+  for (let i = 0; i <= n; i++) {
+    let zi = i < n ? Z[i] : (1.0 - 1e-12);
+    if (zi < 1e-15) zi = 1e-15;
+    if (zi > 1.0 - 1e-12) zi = 1.0 - 1e-12;
+
+    let zi_1 = i > 0 ? Z[i - 1] : 0.0;
+    if (i > 0) {
+      if (zi_1 < 1e-15) zi_1 = 1e-15;
+      if (zi_1 > 1.0 - 1e-12) zi_1 = 1.0 - 1e-12;
+    }
+
+    const fn_1 = i > 0 ? FnZi[i - 1] : 0.0;
+    const ln_zi = Math.log(zi);
+    const ln_1_zi = Math.log(1.0 - zi);
+    const ln_zi_1 = i > 0 ? Math.log(zi_1) : 0.0;
+    const ln_1_zi_1 = i > 0 ? Math.log(1.0 - zi_1) : 0.0;
+
+    const A = -zi - ln_1_zi + zi_1 + ln_1_zi_1;
+    const B = 2.0 * ln_1_zi * fn_1 - 2.0 * ln_1_zi_1 * fn_1;
+    const fn2 = fn_1 * fn_1;
+    const C = ln_zi * fn2 - ln_1_zi * fn2 - ln_zi_1 * fn2 + ln_1_zi_1 * fn2;
+    total += (A + B + C);
+  }
+  return n * total;
+}
+
+function linearRegression2P(x, y, method = "RRX") {
+  const n = x.length;
+  let sx = 0.0, sy = 0.0;
+  for (let i = 0; i < n; i++) {
+    sx += x[i];
+    sy += y[i];
+  }
+  const mx = sx / n;
+  const my = sy / n;
+  let sxx = 0.0, syy = 0.0, sxy = 0.0;
+  for (let i = 0; i < n; i++) {
+    const dx = x[i] - mx;
+    const dy = y[i] - my;
+    sxx += dx * dx;
+    syy += dy * dy;
+    sxy += dx * dy;
+  }
+  let slope;
+  if (method === "RRY") {
+    slope = sxx !== 0 ? (sxy / sxx) : 1.0;
+  } else {
+    slope = sxy !== 0 ? (syy / sxy) : 1.0;
+  }
+  const intercept = my - slope * mx;
+  return { slope, intercept };
+}
+
+function llWeibull(params, fGrp, rcGrp) {
+  const a = params[0], b = params[1];
+  if (a <= 1e-12 || b <= 1e-12 || !Number.isFinite(a) || !Number.isFinite(b)) return 1e30;
+  let llF = 0.0, llRC = 0.0;
+  const logBA = Math.log(b / a);
+  for (let i = 0; i < fGrp.length; i++) {
+    const t = fGrp[i].t, c = fGrp[i].count;
+    const ta = t / a;
+    llF += c * ((b - 1.0) * Math.log(ta) + logBA - Math.pow(ta, b));
+  }
+  for (let i = 0; i < rcGrp.length; i++) {
+    const t = rcGrp[i].t, c = rcGrp[i].count;
+    const ta = t / a;
+    llRC += c * (-Math.pow(ta, b));
+  }
+  const res = -(llF + llRC);
+  return Number.isFinite(res) ? res : 1e30;
+}
+
+function llLognormal(params, fGrp, rcGrp) {
+  const mu = params[0], sig = params[1];
+  if (sig <= 1e-12 || !Number.isFinite(mu) || !Number.isFinite(sig)) return 1e30;
+  let llF = 0.0, llRC = 0.0;
+  const cNorm = 0.5 * Math.log(2.0 * Math.PI) + Math.log(sig);
+  for (let i = 0; i < fGrp.length; i++) {
+    const t = fGrp[i].t, c = fGrp[i].count;
+    const lt = Math.log(t);
+    const z = (lt - mu) / sig;
+    llF += c * (-0.5 * z * z - lt - cNorm);
+  }
+  for (let i = 0; i < rcGrp.length; i++) {
+    const t = rcGrp[i].t, c = rcGrp[i].count;
+    const lt = Math.log(t);
+    const z = (lt - mu) / sig;
+    const sf = Math.max(normSF(z), 1e-300);
+    llRC += c * Math.log(sf);
+  }
+  const res = -(llF + llRC);
+  return Number.isFinite(res) ? res : 1e30;
+}
+
+function llNormal(params, fGrp, rcGrp) {
+  const mu = params[0], sig = params[1];
+  if (sig <= 1e-12 || !Number.isFinite(mu) || !Number.isFinite(sig)) return 1e30;
+  let llF = 0.0, llRC = 0.0;
+  const cNorm = 0.5 * Math.log(2.0 * Math.PI) + Math.log(sig);
+  for (let i = 0; i < fGrp.length; i++) {
+    const t = fGrp[i].t, c = fGrp[i].count;
+    const z = (t - mu) / sig;
+    llF += c * (-0.5 * z * z - cNorm);
+  }
+  for (let i = 0; i < rcGrp.length; i++) {
+    const t = rcGrp[i].t, c = rcGrp[i].count;
+    const z = (t - mu) / sig;
+    const sf = Math.max(normSF(z), 1e-300);
+    llRC += c * Math.log(sf);
+  }
+  const res = -(llF + llRC);
+  return Number.isFinite(res) ? res : 1e30;
+}
+
+function llExp(params, fGrp, rcGrp) {
+  const lam = params[0];
+  if (lam <= 1e-15 || !Number.isFinite(lam)) return 1e30;
+  let nf = 0.0, sumT = 0.0;
+  for (let i = 0; i < fGrp.length; i++) {
+    nf += fGrp[i].count;
+    sumT += fGrp[i].t * fGrp[i].count;
+  }
+  for (let i = 0; i < rcGrp.length; i++) {
+    sumT += rcGrp[i].t * rcGrp[i].count;
+  }
+  return -(nf * Math.log(lam) - lam * sumT);
+}
+
+function lsEstimate(dist, xPP, yPP, fGrp, rcGrp) {
+  const n = xPP.length;
+  if (dist === "Weibull_2P") {
+    const xlin = new Float64Array(n);
+    const ylin = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+      xlin[i] = Math.log(xPP[i]);
+      ylin[i] = Math.log(-Math.log(1.0 - yPP[i]));
+    }
+    const rx = linearRegression2P(xlin, ylin, "RRX");
+    const gx = [Math.exp(-rx.intercept / rx.slope), rx.slope];
+    const ry = linearRegression2P(xlin, ylin, "RRY");
+    const gy = [Math.exp(-ry.intercept / ry.slope), ry.slope];
+    return Math.abs(llWeibull(gx, fGrp, rcGrp)) < Math.abs(llWeibull(gy, fGrp, rcGrp)) ? gx : gy;
+  }
+  if (dist === "Lognormal_2P") {
+    const xlin = new Float64Array(n);
+    const ylin = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+      xlin[i] = Math.log(xPP[i]);
+      ylin[i] = normPPF(yPP[i]);
+    }
+    const rx = linearRegression2P(xlin, ylin, "RRX");
+    const gx = [-rx.intercept / rx.slope, 1.0 / rx.slope];
+    const ry = linearRegression2P(xlin, ylin, "RRY");
+    const gy = [-ry.intercept / ry.slope, 1.0 / ry.slope];
+    return Math.abs(llLognormal(gx, fGrp, rcGrp)) < Math.abs(llLognormal(gy, fGrp, rcGrp)) ? gx : gy;
+  }
+  if (dist === "Normal_2P") {
+    const ylin = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+      ylin[i] = normPPF(yPP[i]);
+    }
+    const rx = linearRegression2P(xPP, ylin, "RRX");
+    const gx = [-rx.intercept / rx.slope, 1.0 / rx.slope];
+    const ry = linearRegression2P(xPP, ylin, "RRY");
+    const gy = [-ry.intercept / ry.slope, 1.0 / ry.slope];
+    return Math.abs(llNormal(gx, fGrp, rcGrp)) < Math.abs(llNormal(gy, fGrp, rcGrp)) ? gx : gy;
+  }
+  if (dist === "Exponential_1P") {
+    let sxy = 0.0, sxx = 0.0, syy = 0.0;
+    for (let i = 0; i < n; i++) {
+      const xi = xPP[i];
+      const yi = -Math.log(1.0 - yPP[i]);
+      sxy += xi * yi;
+      sxx += xi * xi;
+      syy += yi * yi;
+    }
+    const gx = [syy / sxy];
+    const gy = [sxy / sxx];
+    return Math.abs(llExp(gx, fGrp, rcGrp)) < Math.abs(llExp(gy, fGrp, rcGrp)) ? gx : gy;
+  }
+  return [1, 1];
+}
+
+function gradHess2P(llFn, p, fGrp, rcGrp) {
+  const p0 = p[0], p1 = p[1];
+  const h0 = Math.max(Math.abs(p0) * 1e-5, 1e-7);
+  const h1 = Math.max(Math.abs(p1) * 1e-5, 1e-7);
+  const f00 = llFn([p0, p1], fGrp, rcGrp);
+  const fp0 = llFn([p0 + h0, p1], fGrp, rcGrp);
+  const fm0 = llFn([p0 - h0, p1], fGrp, rcGrp);
+  const fp1 = llFn([p0, p1 + h1], fGrp, rcGrp);
+  const fm1 = llFn([p0, p1 - h1], fGrp, rcGrp);
+  const fpp = llFn([p0 + h0, p1 + h1], fGrp, rcGrp);
+  const fpm = llFn([p0 + h0, p1 - h1], fGrp, rcGrp);
+  const fmp = llFn([p0 - h0, p1 + h1], fGrp, rcGrp);
+  const fmm = llFn([p0 - h0, p1 - h1], fGrp, rcGrp);
+
+  const g0 = (fp0 - fm0) / (2.0 * h0);
+  const g1 = (fp1 - fm1) / (2.0 * h1);
+  const H00 = (fp0 - 2.0 * f00 + fm0) / (h0 * h0);
+  const H11 = (fp1 - 2.0 * f00 + fm1) / (h1 * h1);
+  const H01 = (fpp - fpm - fmp + fmm) / (4.0 * h0 * h1);
+  return { val: f00, g: [g0, g1], H: [[H00, H01], [H01, H11]] };
+}
+
+function optimize2P(llFn, initGuess, fGrp, rcGrp, pos0 = true) {
+  let p = [initGuess[0], initGuess[1]];
+  for (let iter = 0; iter < 80; iter++) {
+    const { val, g, H } = gradHess2P(llFn, p, fGrp, rcGrp);
+    const gNorm = Math.sqrt(g[0] * g[0] + g[1] * g[1]);
+    if (gNorm < 1e-9) break;
+
+    const det = H[0][0] * H[1][1] - H[0][1] * H[1][0];
+    let step0, step1;
+    if (det <= 1e-12 || H[0][0] <= 0 || H[1][1] <= 0) {
+      step0 = -g[0] / (Math.abs(H[0][0]) + 1.0);
+      step1 = -g[1] / (Math.abs(H[1][1]) + 1.0);
+    } else {
+      step0 = -( H[1][1] * g[0] - H[0][1] * g[1]) / det;
+      step1 = -(-H[1][0] * g[0] + H[0][0] * g[1]) / det;
+    }
+
+    let alpha = 1.0;
+    let improved = false;
+    while (alpha > 1e-10) {
+      const np0 = p[0] + alpha * step0;
+      const np1 = p[1] + alpha * step1;
+      if ((!pos0 || np0 > 1e-9) && np1 > 1e-9) {
+        const nval = llFn([np0, np1], fGrp, rcGrp);
+        if (nval < val) {
+          p = [np0, np1];
+          improved = true;
+          break;
+        }
+      }
+      alpha *= 0.5;
+    }
+    if (!improved) break;
+  }
+  return p;
+}
+
+function unpackDistributionDataGrouped(daRows) {
+  const failGroups = [];
+  const censGroups = [];
+  for (let i = 0; i < daRows.length; i++) {
+    const r = daRows[i];
+    const start = Number(r.Start);
+    const count = Math.trunc(Number(r.Count) || 0);
+    if (count <= 0 || !Number.isFinite(start)) continue;
+    const hasEnd = r.End !== null && r.End !== undefined && r.End !== "" && Number.isFinite(Number(r.End));
+    if (hasEnd) {
+      const end = Number(r.End);
+      const t = (start + end) / 2.0;
+      if (t > 0) failGroups.push({ t, count });
+    } else {
+      if (start > 0) censGroups.push({ t: start, count });
+    }
+  }
+  return { failGroups, censGroups };
+}
+
+function fitSelectedDistribution(modelName, failGroups, censGroups, ppCache = null) {
+  const timeline = [];
+  for (let m = 1; m <= 240; m++) timeline.push(m);
+  const { method, ci, optimizer } = getFitOptions();
+  const Z = -normPPF((1.0 - ci) / 2.0);
+  const pp = ppCache || plottingPositionsGrouped(failGroups, censGroups);
+
+  if (modelName === "Weibull") {
+    const lsGuess = lsEstimate("Weibull_2P", pp.x, pp.y, failGroups, censGroups);
+    const params = (method === "LS") ? lsGuess : optimize2P(llWeibull, lsGuess, failGroups, censGroups, true);
+    const alpha = params[0], beta = params[1];
+    const { H } = gradHess2P(llWeibull, params, failGroups, censGroups);
+    const det = H[0][0] * H[1][1] - H[0][1] * H[1][0];
+    let alphaSE = 0, betaSE = 0;
+    if (Math.abs(det) > 1e-15) {
+      alphaSE = Math.sqrt(Math.abs(H[1][1] / det));
+      betaSE = Math.sqrt(Math.abs(H[0][0] / det));
+    }
+    const alphaLower = alpha * Math.exp(-Z * (alphaSE / alpha));
+    const alphaUpper = alpha * Math.exp( Z * (alphaSE / alpha));
+    const betaLower  = beta  * Math.exp(-Z * (betaSE / beta));
+    const betaUpper  = beta  * Math.exp( Z * (betaSE / beta));
+
+    const combos = [
+      [alphaLower, betaLower],
+      [alphaLower, betaUpper],
+      [alphaUpper, betaLower],
+      [alphaUpper, betaUpper]
+    ];
+    const F = [], FLower = [], FUpper = [];
+    for (let i = 0; i < timeline.length; i++) {
+      const t = timeline[i];
+      F.push((1.0 - Math.exp(-Math.pow(t / alpha, beta))) * 100.0);
+      let bMin = Infinity, bMax = -Infinity;
+      for (let c = 0; c < combos.length; c++) {
+        const v = (1.0 - Math.exp(-Math.pow(t / combos[c][0], combos[c][1]))) * 100.0;
+        if (v < bMin) bMin = v;
+        if (v > bMax) bMax = v;
+      }
+      FLower.push(bMin);
+      FUpper.push(bMax);
+    }
+    const fittedCdf = new Float64Array(pp.x.length);
+    for (let i = 0; i < pp.x.length; i++) {
+      fittedCdf[i] = 1.0 - Math.exp(-Math.pow(pp.x[i] / alpha, beta));
+    }
+    const AD = andersonDarlingCalc(fittedCdf, pp.y);
+    return {
+      model: "Weibull_2P",
+      timeline,
+      F_t: F,
+      F_lower: FLower,
+      F_upper: FUpper,
+      params: { "Shape beta": beta, "Scale alpha": alpha, method, CI: ci, optimizer },
+      AD,
+      step: false
+    };
+  }
+
+  if (modelName === "Log-Normal") {
+    const lsGuess = lsEstimate("Lognormal_2P", pp.x, pp.y, failGroups, censGroups);
+    const params = (method === "LS") ? lsGuess : optimize2P(llLognormal, lsGuess, failGroups, censGroups, false);
+    const mu = params[0], sigma = Math.max(params[1], 1e-12);
+    const { H } = gradHess2P(llLognormal, params, failGroups, censGroups);
+    const det = H[0][0] * H[1][1] - H[0][1] * H[1][0];
+    let muSE = 0, sigmaSE = 0;
+    if (Math.abs(det) > 1e-15) {
+      muSE = Math.sqrt(Math.abs(H[1][1] / det));
+      sigmaSE = Math.sqrt(Math.abs(H[0][0] / det));
+    }
+    const muLower = mu - Z * muSE;
+    const muUpper = mu + Z * muSE;
+    const sigmaLower = Math.max(sigma * Math.exp(-Z * (sigmaSE / sigma)), 1e-12);
+    const sigmaUpper = Math.max(sigma * Math.exp( Z * (sigmaSE / sigma)), 1e-12);
+
+    const combos = [
+      [muLower, sigmaLower],
+      [muLower, sigmaUpper],
+      [muUpper, sigmaLower],
+      [muUpper, sigmaUpper]
+    ];
+    const F = [], FLower = [], FUpper = [];
+    for (let i = 0; i < timeline.length; i++) {
+      const lt = Math.log(timeline[i]);
+      F.push(normCDF((lt - mu) / sigma) * 100.0);
+      let bMin = Infinity, bMax = -Infinity;
+      for (let c = 0; c < combos.length; c++) {
+        const v = normCDF((lt - combos[c][0]) / combos[c][1]) * 100.0;
+        if (v < bMin) bMin = v;
+        if (v > bMax) bMax = v;
+      }
+      FLower.push(bMin);
+      FUpper.push(bMax);
+    }
+    const fittedCdf = new Float64Array(pp.x.length);
+    for (let i = 0; i < pp.x.length; i++) {
+      fittedCdf[i] = normCDF((Math.log(pp.x[i]) - mu) / sigma);
+    }
+    const AD = andersonDarlingCalc(fittedCdf, pp.y);
+    return {
+      model: "Lognormal_2P",
+      timeline,
+      F_t: F,
+      F_lower: FLower,
+      F_upper: FUpper,
+      params: { Mu: mu, Sigma: sigma, method, CI: ci, optimizer },
+      AD,
+      step: false
+    };
+  }
+
+  if (modelName === "Exponential") {
+    const lsGuess = lsEstimate("Exponential_1P", pp.x, pp.y, failGroups, censGroups);
+    let sumT = 0.0;
+    for (let i = 0; i < failGroups.length; i++) sumT += failGroups[i].t * failGroups[i].count;
+    for (let i = 0; i < censGroups.length; i++) sumT += censGroups[i].t * censGroups[i].count;
+    const mleLam = pp.nF / sumT;
+    const lam = (method === "LS") ? lsGuess[0] : mleLam;
+    const lamSE = lam / Math.sqrt(pp.nF);
+    const lamLower = lam * Math.exp(-Z * (lamSE / lam));
+    const lamUpper = lam * Math.exp( Z * (lamSE / lam));
+
+    const F = [], FLower = [], FUpper = [];
+    for (let i = 0; i < timeline.length; i++) {
+      const t = timeline[i];
+      F.push((1.0 - Math.exp(-lam * t)) * 100.0);
+      const b1 = (1.0 - Math.exp(-lamLower * t)) * 100.0;
+      const b2 = (1.0 - Math.exp(-lamUpper * t)) * 100.0;
+      FLower.push(Math.min(b1, b2));
+      FUpper.push(Math.max(b1, b2));
+    }
+    const fittedCdf = new Float64Array(pp.x.length);
+    for (let i = 0; i < pp.x.length; i++) {
+      fittedCdf[i] = 1.0 - Math.exp(-lam * pp.x[i]);
+    }
+    const AD = andersonDarlingCalc(fittedCdf, pp.y);
+    return {
+      model: "Exponential_1P",
+      timeline,
+      F_t: F,
+      F_lower: FLower,
+      F_upper: FUpper,
+      params: { Lambda: lam, MTTF: lam > 0 ? (1.0 / lam) : NaN, method, CI: ci, optimizer },
+      AD,
+      step: false
+    };
+  }
+
+  if (modelName === "Normal") {
+    const lsGuess = lsEstimate("Normal_2P", pp.x, pp.y, failGroups, censGroups);
+    const params = (method === "LS") ? lsGuess : optimize2P(llNormal, lsGuess, failGroups, censGroups, false);
+    const mu = params[0], sigma = Math.max(params[1], 1e-12);
+    const { H } = gradHess2P(llNormal, params, failGroups, censGroups);
+    const det = H[0][0] * H[1][1] - H[0][1] * H[1][0];
+    let muSE = 0, sigmaSE = 0;
+    if (Math.abs(det) > 1e-15) {
+      muSE = Math.sqrt(Math.abs(H[1][1] / det));
+      sigmaSE = Math.sqrt(Math.abs(H[0][0] / det));
+    }
+    const muLower = mu - Z * muSE;
+    const muUpper = mu + Z * muSE;
+    const sigmaLower = Math.max(sigma * Math.exp(-Z * (sigmaSE / sigma)), 1e-12);
+    const sigmaUpper = Math.max(sigma * Math.exp( Z * (sigmaSE / sigma)), 1e-12);
+
+    const combos = [
+      [muLower, sigmaLower],
+      [muLower, sigmaUpper],
+      [muUpper, sigmaLower],
+      [muUpper, sigmaUpper]
+    ];
+    const F = [], FLower = [], FUpper = [];
+    for (let i = 0; i < timeline.length; i++) {
+      const t = timeline[i];
+      F.push(normCDF((t - mu) / sigma) * 100.0);
+      let bMin = Infinity, bMax = -Infinity;
+      for (let c = 0; c < combos.length; c++) {
+        const v = normCDF((t - combos[c][0]) / combos[c][1]) * 100.0;
+        if (v < bMin) bMin = v;
+        if (v > bMax) bMax = v;
+      }
+      FLower.push(bMin);
+      FUpper.push(bMax);
+    }
+    const fittedCdf = new Float64Array(pp.x.length);
+    for (let i = 0; i < pp.x.length; i++) {
+      fittedCdf[i] = normCDF((pp.x[i] - mu) / sigma);
+    }
+    const AD = andersonDarlingCalc(fittedCdf, pp.y);
+    return {
+      model: "Normal_2P",
+      timeline,
+      F_t: F,
+      F_lower: FLower,
+      F_upper: FUpper,
+      params: { Mu: mu, Sigma: sigma, method, CI: ci, optimizer },
+      AD,
+      step: false
+    };
+  }
+
+  if (modelName === "Kaplan_Meier") {
+    // lifelines KaplanMeierFitter 대응:
+    // 각 고장 시점 t_f에서 at_risk 수량 대비 (1 - d_i / n_i) 누적곱 계산
+    const allEventsMap = new Map();
+    let totalN = 0;
+    for (let i = 0; i < failGroups.length; i++) {
+      const t = failGroups[i].t, c = failGroups[i].count;
+      totalN += c;
+      if (!allEventsMap.has(t)) allEventsMap.set(t, { d: 0, cens: 0 });
+      allEventsMap.get(t).d += c;
+    }
+    for (let i = 0; i < censGroups.length; i++) {
+      const t = censGroups[i].t, c = censGroups[i].count;
+      totalN += c;
+      if (!allEventsMap.has(t)) allEventsMap.set(t, { d: 0, cens: 0 });
+      allEventsMap.get(t).cens += c;
+    }
+    const timesSorted = Array.from(allEventsMap.keys()).sort((a, b) => a - b);
+    let atRisk = totalN;
+    let S = 1.0;
+    const kmTable = [];
+    for (let i = 0; i < timesSorted.length; i++) {
+      const t = timesSorted[i];
+      const ev = allEventsMap.get(t);
+      if (ev.d > 0 && atRisk > 0) {
+        S *= (1.0 - ev.d / atRisk);
+      }
+      kmTable.push({ t, S });
+      atRisk -= (ev.d + ev.cens);
+    }
+
+    const F = [];
+    let kIdx = 0;
+    let curS = 1.0;
+    for (let i = 0; i < timeline.length; i++) {
+      const tm = timeline[i];
+      while (kIdx < kmTable.length && kmTable[kIdx].t <= tm) {
+        curS = kmTable[kIdx].S;
+        kIdx++;
+      }
+      F.push((1.0 - curS) * 100.0);
+    }
+    return {
+      model: "Kaplan_Meier",
+      timeline,
+      F_t: F,
+      F_lower: F.slice(),
+      F_upper: F.slice(),
+      params: { N_failure: pp.nF, N_censored: pp.nRC, CI: ci },
+      AD: NaN,
+      step: true
+    };
+  }
+
+  throw new Error(`지원하지 않는 분포 모델입니다: ${modelName}`);
+}
+
+function formatPyFloat6g(val) {
+  const num = Number(val);
+  if (!Number.isFinite(num)) return String(val);
+  if (num === 0) return "0";
+  const absVal = Math.abs(num);
+  if (absVal >= 1e-4 && absVal < 1e6) {
+    return String(Number(num.toPrecision(6)));
+  }
+  //지수 표기법: e-5 -> e-05 (Python .6g 스타일)
+  let s = num.toPrecision(6);
+  s = s.replace(/(\.\d*?[1-9])0+(e)/i, "$1$2").replace(/\.0+(e)/i, "$1");
+  s = s.replace(/e([+-])(\d)$/i, "e$10$2");
+  return s;
+}
+
+function makeFailureRateLines(result, maxEnd = 120) {
+  const F = result.F_t, L = result.F_lower, U = result.F_upper;
+  const model = result.model || "";
+  let targetMonths;
+  if (model === "Kaplan_Meier") {
+    targetMonths = [12, 24, 36, 60, 84].filter(m => m < maxEnd);
+    targetMonths.push(maxEnd);
+  } else {
+    targetMonths = [12, 24, 36, 60, 84, 120];
+  }
+  const lines = [];
+  for (let i = 0; i < targetMonths.length; i++) {
+    const m = targetMonths[i];
+    if (F.length >= m && m >= 1) {
+      const mPad = String(m).padStart(3, " ");
+      lines.push(`▶ ${mPad}개월 누적고장률: ${F[m - 1].toFixed(4)}%  (CI: ${L[m - 1].toFixed(4)} ~ ${U[m - 1].toFixed(4)}%)`);
+    }
+  }
+  return lines;
+}
+
+function calculateGoodnessOfFit(failGroups, censGroups, maxEnd = 120) {
+  const compare = [];
+  const errors = [];
+  const ppCache = plottingPositionsGrouped(failGroups, censGroups);
+  const models = ["Weibull", "Log-Normal", "Normal", "Exponential"];
+
+  for (let i = 0; i < models.length; i++) {
+    const m = models[i];
+    try {
+      const r = fitSelectedDistribution(m, failGroups, censGroups, ppCache);
+      if (r.AD !== null && r.AD !== undefined && Number.isFinite(r.AD)) {
+        compare.push(r);
+      }
+    } catch (e) {
+      errors.push(`${m}: ${e.message}`);
+    }
+  }
+
+  if (compare.length === 0) {
+    return { compare: [], best: null, text: "[Critical Error] 모든 분포 피팅에 실패했습니다.\n" + errors.join("\n") };
+  }
+
+  compare.sort((a, b) => a.AD - b.AD);
+  const best = compare[0];
+
+  const lines = [];
+  lines.push(`최종 분석 결과: 가장 적합한 분포는 '${best.model}' 입니다.`);
+  lines.push("");
+  lines.push("Distribution    | AD Value");
+  for (let i = 0; i < compare.length; i++) {
+    const r = compare[i];
+    lines.push(`${r.model.padEnd(15, " ")} | ${r.AD.toFixed(4)}`);
+  }
+  lines.push("");
+  lines.push(`▶ 선택된 모델(${best.model})의 모수 (MLE 추정):`);
+  for (const [k, v] of Object.entries(best.params)) {
+    const keyPad = k.padEnd(12, " ");
+    if (typeof v === "number" && Number.isFinite(v)) {
+      lines.push(`   - ${keyPad}: ${formatPyFloat6g(v)}`);
+    } else {
+      lines.push(`   - ${keyPad}: ${v}`);
+    }
+  }
+  lines.push("");
+  lines.push("[누적고장률 분석]");
+  lines.push(...makeFailureRateLines(best, maxEnd));
+
+  if (errors.length > 0) {
+    lines.push("");
+    lines.push("[참고] 일부 모델 피팅 실패/경고:");
+    errors.forEach(e => lines.push(` - ${e}`));
+  }
+
+  return { compare, best, text: lines.join("\n") };
+}
+
+function makeDistributionResultText(result, maxEnd = 120) {
+  const lines = [];
+  lines.push(`최종 분석 결과 (${result.model})`);
+  lines.push("");
+  if (result.AD !== null && result.AD !== undefined && Number.isFinite(result.AD)) {
+    lines.push(`Anderson-Darling AD : ${result.AD.toFixed(4)}`);
+    lines.push("");
+  }
+  lines.push("[모수 / 추정값]");
+  for (const [k, v] of Object.entries(result.params)) {
+    const keyPad = k.padEnd(12, " ");
+    if (typeof v === "number" && Number.isFinite(v)) {
+      lines.push(` - ${keyPad}: ${formatPyFloat6g(v)}`);
+    } else {
+      lines.push(` - ${keyPad}: ${v}`);
+    }
+  }
+  lines.push("");
+  lines.push("[누적고장률 분석]");
+  lines.push(...makeFailureRateLines(result, maxEnd));
+  return lines.join("\n");
+}
+</script>
+<script>
+// ==============================================================================
+// 4. 메인 분석 실행 로직 (run_analysis, run_distribution_analysis, prepare_distribution_input)
+// ==============================================================================
+function buildFilteredPivotCounts() {
+  if (!appState.df_svc || Object.keys(appState.prod_qty_map).length === 0) {
+    showMessageBox("경고", "서비스 데이터와 생산수량 데이터를 먼저 로드하세요.", "warning");
+    return null;
+  }
+
+  const isYearly = document.getElementById("radio_yearly").checked;
+  const selectedParts1 = getSelectedListItems("list_components");
+  const selectedParts2 = getSelectedListItems("list_components_2");
+  const selectedTargets = getSelectedListItems("list_plot_months");
+
+  if (selectedParts1.length === 0 || selectedParts2.length === 0 || selectedTargets.length === 0) {
+    showMessageBox("경고", "분석할 부품(필터 1/2)과 플로팅 대상을 하나 이상 선택하세요.", "warning");
+    return null;
+  }
+
+  const partCol1 = resolveColumnName(document.getElementById("combo_part_col").value);
+  const partCol2 = resolveColumnName(document.getElementById("combo_part_col_2").value);
+  const partIdx1 = appState.col_index_map[partCol1];
+  const partIdx2 = appState.col_index_map[partCol2];
+
+  const targetMonths = isYearly
+    ? appState.filtered_months.filter(m => selectedTargets.includes(m.slice(0, 4)))
+    : selectedTargets.slice();
+
+  const targetSet = new Set(targetMonths);
+  const part1Set = new Set(selectedParts1.map(normalizeFilterChar));
+  const part2Set = new Set(selectedParts2.map(normalizeFilterChar));
+
+  const dfBase = applyClosePeriodFilter(appState.df_svc);
+  const dfFiltered = dfBase.filter(row => {
+    if (!targetSet.has(row.PROD_YYYYMM)) return false;
+    const v1 = normalizeFilterChar(row.cells[partIdx1]);
+    const v2 = normalizeFilterChar(row.cells[partIdx2]);
+    return part1Set.has(v1) && part2Set.has(v2);
+  });
+
+  let maxPossibleUsage = 1;
+  for (let i = 0; i < dfFiltered.length; i++) {
+    if (dfFiltered[i]["사용개월"] > maxPossibleUsage) {
+      maxPossibleUsage = dfFiltered[i]["사용개월"];
+    }
+  }
+
+  // 행: 1 .. maxPossibleUsage, 열: targetMonths
+  const matrix = {};
+  for (let m = 1; m <= maxPossibleUsage; m++) {
+    const rowObj = {};
+    for (let c = 0; c < targetMonths.length; c++) {
+      rowObj[targetMonths[c]] = 0;
+    }
+    matrix[m] = rowObj;
+  }
+
+  for (let i = 0; i < dfFiltered.length; i++) {
+    const r = dfFiltered[i];
+    const u = r["사용개월"];
+    const pm = r.PROD_YYYYMM;
+    if (matrix[u] && pm in matrix[u]) {
+      matrix[u][pm] += 1;
+    }
+  }
+
+  // 계단형 미래 미관측 영역 NaN 처리 (max_age + 2 이상)
+  const maxCloseYr = parseInt(appState.max_service_month.slice(0, 4), 10);
+  const maxCloseMo = parseInt(appState.max_service_month.slice(4, 6), 10);
+
+  for (let c = 0; c < targetMonths.length; c++) {
+    const pm = targetMonths[c];
+    const pYr = parseInt(pm.slice(0, 4), 10);
+    const pMo = parseInt(pm.slice(4, 6), 10);
+    const maxAge = (maxCloseYr - pYr) * 12 + (maxCloseMo - pMo);
+    for (let u = maxAge + 2; u <= maxPossibleUsage; u++) {
+      if (matrix[u]) {
+        matrix[u][pm] = null; // NaN (미래 기간)
+      }
+    }
+  }
+
+  return {
+    isYearly,
+    selectedParts1,
+    selectedParts2,
+    selectedTargets,
+    partCol1,
+    partCol2,
+    targetMonths,
+    dfFiltered,
+    maxPossibleUsage,
+    matrix
+  };
+}
+
+function runAnalysis() {
+  const analysisType = parseInt(document.getElementById("combo_analysis_type").value, 10);
+  if (analysisType === 4 || analysisType === 5) {
+    runDistributionAnalysis();
+    return;
+  }
+
+  const base = buildFilteredPivotCounts();
+  if (!base) return;
+
+  const { isYearly, selectedTargets, targetMonths, maxPossibleUsage, matrix, dfFiltered, partCol1, partCol2, selectedParts1 } = base;
+
+  let colNames = [];
+  let prodQtys = {};
+  let pivotCounts = {}; // { usageMonth: { colName: number|null } }
+
+  if (isYearly) {
+    colNames = selectedTargets.slice();
+    for (let yIdx = 0; yIdx < colNames.length; yIdx++) {
+      const yr = colNames[yIdx];
+      let sumQ = 0;
+      for (let mIdx = 0; mIdx < targetMonths.length; mIdx++) {
+        const m = targetMonths[mIdx];
+        if (m.slice(0, 4) === yr) {
+          sumQ += (appState.prod_qty_map[m] || 0);
+        }
+      }
+      prodQtys[yr] = sumQ;
+    }
+
+    for (let u = 1; u <= maxPossibleUsage; u++) {
+      pivotCounts[u] = {};
+      for (let yIdx = 0; yIdx < colNames.length; yIdx++) {
+        const yr = colNames[yIdx];
+        let sumVal = 0;
+        let validCount = 0;
+        for (let mIdx = 0; mIdx < targetMonths.length; mIdx++) {
+          const m = targetMonths[mIdx];
+          if (m.slice(0, 4) === yr) {
+            const v = matrix[u][m];
+            if (v !== null && v !== undefined && !Number.isNaN(v)) {
+              sumVal += v;
+              validCount++;
+            }
+          }
+        }
+        pivotCounts[u][yr] = validCount >= 1 ? sumVal : null;
+      }
+    }
+  } else {
+    colNames = targetMonths.slice();
+    for (let i = 0; i < colNames.length; i++) {
+      const m = colNames[i];
+      prodQtys[m] = (m in appState.prod_qty_map) ? appState.prod_qty_map[m] : 1;
+    }
+    for (let u = 1; u <= maxPossibleUsage; u++) {
+      pivotCounts[u] = Object.assign({}, matrix[u]);
+    }
+  }
+
+  // 누적 집계 테이블 (cumsum)
+  const pivotCum = {};
+  const runningSum = {};
+  colNames.forEach(c => { runningSum[c] = 0; });
+
+  for (let u = 1; u <= maxPossibleUsage; u++) {
+    pivotCum[u] = {};
+    for (let i = 0; i < colNames.length; i++) {
+      const c = colNames[i];
+      const v = pivotCounts[u][c];
+      if (v === null || v === undefined || Number.isNaN(v)) {
+        pivotCum[u][c] = null;
+      } else {
+        runningSum[c] += v;
+        pivotCum[u][c] = runningSum[c];
+      }
+    }
+  }
+
+  // 최종 표시할 데이터프레임 결정
+  const finalDf = {};
+  for (let u = 1; u <= maxPossibleUsage; u++) {
+    finalDf[u] = {};
+    for (let i = 0; i < colNames.length; i++) {
+      const c = colNames[i];
+      const denom = prodQtys[c] || 1;
+      if (analysisType === 0) {
+        finalDf[u][c] = pivotCounts[u][c];
+      } else if (analysisType === 1) {
+        finalDf[u][c] = pivotCum[u][c];
+      } else if (analysisType === 2) {
+        const v = pivotCounts[u][c];
+        finalDf[u][c] = (v === null || v === undefined) ? null : ((v / denom) * 100.0);
+      } else if (analysisType === 3) {
+        const v = pivotCum[u][c];
+        finalDf[u][c] = (v === null || v === undefined) ? null : ((v / denom) * 100.0);
+      }
+    }
+  }
+
+  // 그래프 플로팅 수행
+  plotPivotGraph(finalDf, maxPossibleUsage, colNames, analysisType, prodQtys);
+
+  // Total_Col 및 Total_Row 계산
+  const displayCols = [...colNames, "Total_Col"];
+  const displayRows = [];
+
+  for (let u = 1; u <= maxPossibleUsage; u++) {
+    const rowVals = {};
+    let rowSum = 0.0;
+    for (let i = 0; i < colNames.length; i++) {
+      const c = colNames[i];
+      const v = finalDf[u][c];
+      rowVals[c] = v;
+      if (v !== null && v !== undefined && Number.isFinite(v)) {
+        rowSum += v;
+      }
+    }
+    rowVals["Total_Col"] = rowSum;
+    displayRows.push({ usageMonth: u, label: `${u}M`, values: rowVals, isTotal: false });
+  }
+
+  if (analysisType === 0 || analysisType === 2) {
+    const totalRowVals = {};
+    for (let i = 0; i < displayCols.length; i++) {
+      const c = displayCols[i];
+      let colSum = 0.0;
+      for (let r = 0; r < displayRows.length; r++) {
+        const v = displayRows[r].values[c];
+        if (v !== null && v !== undefined && Number.isFinite(v)) {
+          colSum += v;
+        }
+      }
+      totalRowVals[c] = colSum;
+    }
+    displayRows.push({ usageMonth: "Total_Row", label: "Total_Row", values: totalRowVals, isTotal: true });
+  }
+
+  appState.calculated_pivot = {
+    mode: "pivot",
+    analysisType,
+    columns: displayCols,
+    rows: displayRows
+  };
+
+  renderPivotTable(displayCols, displayRows, analysisType);
+  document.getElementById("btn_export").disabled = false;
+
+  // Data Analysis 요약 리포트 출력
+  const typeNames = [
+    "순간 서비스 건 분석",
+    "누적 서비스 건 분석",
+    "순간 고장률 분석 (Hazard)",
+    "누적 고장률 분석 (CDF)"
+  ];
+  let totalProdSum = 0;
+  colNames.forEach(c => { totalProdSum += (prodQtys[c] || 0); });
+  const summaryLines = [
+    `[Analysis Type] ${typeNames[analysisType]}`,
+    `[분석 기준 주기] ${isYearly ? "년별 분석" : "월별 분석"} (대상: ${colNames.length}개 구간)`,
+    `[필터 1 (${partCol1})] ${selectedParts1.length}개 항목 선택`,
+    `[필터 2 (${partCol2})] ${base.selectedParts2.length}개 항목 선택`,
+    `[ 집계 요약 ]`,
+    ` - 필터링된 서비스 건수 : ${dfFiltered.length.toLocaleString()} 건`,
+    ` - 대상 기간 총 생산수량: ${totalProdSum.toLocaleString()} 대`,
+    ` - 최대 관측 사용개월   : ${maxPossibleUsage} 개월 (최근 완료월: ${appState.max_service_month})`
+  ];
+  document.getElementById("txt_distribution_result").textContent = summaryLines.join("\n");
+}
+
+function prepareDistributionInput(matrix, maxPossibleUsage, targetMonths, mode = "survival") {
+  const usageMonths = [];
+  for (let m = 1; m <= maxPossibleUsage; m++) usageMonths.push(m);
+
+  // Total_Col 및 Total_Row 산출
+  const totalColByMonth = {};
+  const totalRowByProdMonth = {};
+  targetMonths.forEach(pm => { totalRowByProdMonth[pm] = 0; });
+
+  for (let m = 1; m <= maxPossibleUsage; m++) {
+    let rSum = 0;
+    for (let i = 0; i < targetMonths.length; i++) {
+      const pm = targetMonths[i];
+      const v = matrix[m][pm];
+      if (v !== null && v !== undefined && Number.isFinite(v)) {
+        rSum += v;
+        totalRowByProdMonth[pm] += v;
+      }
+    }
+    totalColByMonth[m] = rSum;
+  }
+
+  const daRows = [];
+  // 1. 고장 건수 데이터 (Start = m - 1, End = m)
+  for (let i = 0; i < usageMonths.length; i++) {
+    const m = usageMonths[i];
+    daRows.push({
+      Start: m - 1,
+      End: m,
+      Count: Math.trunc(totalColByMonth[m] || 0)
+    });
+  }
+
+  // 2. Censored 데이터 (Start = max_usage - i, End = null)
+  for (let i = 0; i < targetMonths.length; i++) {
+    const pm = targetMonths[i];
+    const prodQty = Math.trunc(appState.prod_qty_map[pm] || 0);
+    let censoredQty;
+    if (mode === "production") {
+      censoredQty = prodQty;
+    } else {
+      const failQty = totalRowByProdMonth[pm] || 0;
+      censoredQty = Math.max(prodQty - failQty, 0);
+    }
+    const startVal = maxPossibleUsage - i;
+    if (startVal > 0) {
+      daRows.push({
+        Start: startVal,
+        End: null,
+        Count: Math.trunc(censoredQty)
+      });
+    }
+  }
+
+  // Field Failure Rate 산포도용 (x_time, y_ratio) 계산
+  const xTime = [];
+  const yRatio = [];
+  const runningCum = {};
+  targetMonths.forEach(pm => { runningCum[pm] = 0; });
+
+  for (let m = 1; m <= maxPossibleUsage; m++) {
+    for (let i = 0; i < targetMonths.length; i++) {
+      const pm = targetMonths[i];
+      const v = matrix[m][pm];
+      if (v !== null && v !== undefined && Number.isFinite(v)) {
+        runningCum[pm] += v;
+        const pq = appState.prod_qty_map[pm] || 1;
+        const cdfVal = (runningCum[pm] / pq) * 100.0;
+        if (Number.isFinite(cdfVal) && cdfVal > 0) {
+          xTime.push(m);
+          yRatio.push(cdfVal);
+        }
+      }
+    }
+  }
+
+  return { daRows, xTime, yRatio };
+}
+
+function runDistributionAnalysis() {
+  const base = buildFilteredPivotCounts();
+  if (!base) return;
+  if (base.dfFiltered.length === 0) {
+    showMessageBox("경고", "선택 조건에 부합하는 데이터가 없습니다.", "warning");
+    return;
+  }
+
+  const analysisIdx = parseInt(document.getElementById("combo_analysis_type").value, 10);
+  const distributionMode = (analysisIdx === 5) ? "production" : "survival";
+
+  try {
+    const { daRows, xTime, yRatio } = prepareDistributionInput(
+      base.matrix,
+      base.maxPossibleUsage,
+      base.targetMonths,
+      distributionMode
+    );
+
+    appState.distribution_context = {
+      Distribution_Analysis_df: daRows,
+      x_time: xTime,
+      y_ratio: yRatio,
+      distribution_mode: distributionMode,
+      analysis_index: analysisIdx
+    };
+
+    const comboModel = document.getElementById("combo_distribution_model");
+    if (comboModel.value !== "적합도 검증(AD)") {
+      appState.signals_blocked = true;
+      comboModel.value = "적합도 검증(AD)";
+      appState.signals_blocked = false;
+    }
+
+    document.getElementById("btn_export").disabled = false;
+    applyDistributionModel(comboModel.value);
+  } catch (err) {
+    showMessageBox("오류", `분석 중 오류가 발생했습니다:\n${err.message}`, "error");
+    document.getElementById("txt_distribution_result").textContent = `[오류] Distribution Analysis 실패\n${err.message}`;
+  }
+}
+
+function applyDistributionModel(modelName) {
+  if (!appState.distribution_context) return;
+  try {
+    const analysisIdx = parseInt(document.getElementById("combo_analysis_type").value, 10);
+    const distributionMode = (analysisIdx === 5) ? "production" : "survival";
+    const modeLabel = (distributionMode === "production")
+      ? "Distribution_Analysis_2(Production)"
+      : "Distribution_Analysis_1(Survival)";
+
+    const { method, ci, optimizer } = getFitOptions();
+    const fitOptionLabel = `method=${method}, CI=${ci}, optimizer=${optimizer}`;
+
+    const tableRows = appState.distribution_context.Distribution_Analysis_df;
+    appState.distribution_context.distribution_mode = distributionMode;
+    const { failGroups, censGroups } = unpackDistributionDataGrouped(tableRows);
+    const xTime = appState.distribution_context.x_time || [];
+    const yRatio = appState.distribution_context.y_ratio || [];
+
+    if (failGroups.length === 0) {
+      throw new Error("고장 데이터(failures)가 없어 분포 피팅을 수행할 수 없습니다.");
+    }
+
+    let maxEnd = 120;
+    let foundEnd = 0;
+    for (let i = 0; i < tableRows.length; i++) {
+      const eVal = Number(tableRows[i].End);
+      if (tableRows[i].End !== null && Number.isFinite(eVal) && eVal > foundEnd) {
+        foundEnd = Math.trunc(eVal);
+      }
+    }
+    if (foundEnd > 0) maxEnd = foundEnd;
+
+    let chosenResult = null;
+    let rawText = "";
+    let titleSuffix = "";
+
+    if (modelName === "적합도 검증(AD)") {
+      const { best, text } = calculateGoodnessOfFit(failGroups, censGroups, maxEnd);
+      rawText = `[Analysis Type] ${modeLabel}\n[Input Table] 현재 피벗 분석 데이터 테이블 반영\n[Fit Options] ${fitOptionLabel}\n\n` + text;
+      chosenResult = best;
+      titleSuffix = "Best by AD";
+    } else {
+      chosenResult = fitSelectedDistribution(modelName, failGroups, censGroups);
+      rawText = `[Analysis Type] ${modeLabel}\n[Input Table] 현재 피벗 분석 데이터 테이블 반영\n[Fit Options] ${fitOptionLabel}\n\n` +
+                makeDistributionResultText(chosenResult, maxEnd);
+    }
+
+    const targetMonth = (chosenResult && chosenResult.model === "Kaplan_Meier") ? maxEnd : 120;
+    const escapedText = rawText
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+    const highlightRegex = new RegExp(`(▶\\s*${targetMonth}개월 누적고장률:[^\\n]*)`, "g");
+    const htmlText = escapedText
+      .replace(highlightRegex, '<span style="color: blue; font-weight: bold;">$1</span>')
+      .replace(/\n/g, "<br>");
+
+    document.getElementById("txt_distribution_result").innerHTML = htmlText;
+
+    if (chosenResult) {
+      plotDistributionResult(chosenResult, xTime, yRatio, titleSuffix);
+      const combinedRows = [];
+      const maxLen = Math.max(tableRows.length, chosenResult.timeline.length);
+      for (let i = 0; i < maxLen; i++) {
+        const left = tableRows[i] || {};
+        const hasRight = i < chosenResult.timeline.length;
+        combinedRows.push({
+          Start: left.Start !== undefined ? left.Start : null,
+          End: left.End !== undefined ? left.End : null,
+          Count: left.Count !== undefined ? left.Count : null,
+          " ": null,
+          Month: hasRight ? chosenResult.timeline[i] : null,
+          "Failure_Rate(%)": hasRight ? chosenResult.F_t[i] : null,
+          "Lower_CI(%)": hasRight ? chosenResult.F_lower[i] : null,
+          "Upper_CI(%)": hasRight ? chosenResult.F_upper[i] : null
+        });
+      }
+      const distHeaders = ["Start", "End", "Count", " ", "Month", "Failure_Rate(%)", "Lower_CI(%)", "Upper_CI(%)"];
+      appState.calculated_pivot = {
+        mode: "dist",
+        analysisType: analysisIdx,
+        columns: distHeaders,
+        rows: combinedRows
+      };
+      renderDistributionTable(distHeaders, combinedRows);
+    }
+  } catch (err) {
+    showMessageBox("오류", `분포 분석 중 오류가 발생했습니다:\n${err.message}`, "error");
+    document.getElementById("txt_distribution_result").textContent = `[오류] ${modelName} 분석 실패\n${err.message}`;
+  }
+}
+
+// ==============================================================================
+// 5. 테이블 렌더링 및 CSV 내보내기 (render_table, export_csv)
+// ==============================================================================
+function renderPivotTable(columns, rows, analysisType) {
+  const table = document.getElementById("table_widget");
+  const thead = table.querySelector("thead");
+  const tbody = table.querySelector("tbody");
+  thead.innerHTML = "";
+  tbody.innerHTML = "";
+
+  const trHead = document.createElement("tr");
+  const headers = ["사용개월", ...columns];
+  headers.forEach(h => {
+    const th = document.createElement("th");
+    th.textContent = h;
+    trHead.appendChild(th);
+  });
+  thead.appendChild(trHead);
+
+  const frag = document.createDocumentFragment();
+  for (let r = 0; r < rows.length; r++) {
+    const rowObj = rows[r];
+    const tr = document.createElement("tr");
+    if (rowObj.isTotal) tr.className = "total-row";
+
+    const tdFirst = document.createElement("td");
+    tdFirst.className = "align-center";
+    tdFirst.textContent = rowObj.label;
+    tr.appendChild(tdFirst);
+
+    for (let c = 0; c < columns.length; c++) {
+      const colName = columns[c];
+      const val = rowObj.values[colName];
+      const td = document.createElement("td");
+      td.className = "align-right";
+      if (val === null || val === undefined || Number.isNaN(val)) {
+        td.textContent = "-";
+      } else if (analysisType < 2) {
+        td.textContent = Math.round(val).toLocaleString();
+      } else {
+        td.textContent = `${Number(val).toFixed(5)}%`;
+      }
+      tr.appendChild(td);
+    }
+    frag.appendChild(tr);
+  }
+  tbody.appendChild(frag);
+}
+
+function renderDistributionTable(headers, rows) {
+  const table = document.getElementById("table_widget");
+  const thead = table.querySelector("thead");
+  const tbody = table.querySelector("tbody");
+  thead.innerHTML = "";
+  tbody.innerHTML = "";
+
+  const trHead = document.createElement("tr");
+  headers.forEach(h => {
+    const th = document.createElement("th");
+    th.textContent = h;
+    trHead.appendChild(th);
+  });
+  thead.appendChild(trHead);
+
+  const frag = document.createDocumentFragment();
+  for (let r = 0; r < rows.length; r++) {
+    const rowObj = rows[r];
+    const tr = document.createElement("tr");
+    for (let c = 0; c < headers.length; c++) {
+      const colName = headers[c];
+      const val = rowObj[colName];
+      const td = document.createElement("td");
+      td.className = "align-right";
+      let displayVal = "";
+      if (val !== null && val !== undefined && !Number.isNaN(val)) {
+        if (colName === "Count") {
+          displayVal = Math.trunc(val).toLocaleString();
+        } else if (colName === "Month") {
+          displayVal = String(Math.trunc(val));
+        } else if (colName === "Failure_Rate(%)" || colName === "Lower_CI(%)" || colName === "Upper_CI(%)") {
+          displayVal = Number(val).toFixed(5);
+        } else if (colName === " ") {
+          displayVal = "";
+        } else {
+          displayVal = String(Math.trunc(val));
+        }
+      }
+      td.textContent = displayVal;
+      tr.appendChild(td);
+    }
+    frag.appendChild(tr);
+  }
+  tbody.appendChild(frag);
+}
+
+function exportCsv() {
+  if (!appState.calculated_pivot) return;
+  const { mode, columns, rows } = appState.calculated_pivot;
+  const csvLines = [];
+
+  function escapeCsvCell(val) {
+    if (val === null || val === undefined || Number.isNaN(val)) return "";
+    const s = String(val);
+    if (s.includes(",") || s.includes('"') || s.includes("\n")) {
+      return `"${s.replace(/"/g, '""')}"`;
+    }
+    return s;
+  }
+
+  if (mode === "dist") {
+    csvLines.push(columns.map(escapeCsvCell).join(","));
+    for (let r = 0; r < rows.length; r++) {
+      const rowObj = rows[r];
+      const line = columns.map(col => {
+        const v = rowObj[col];
+        return (v === null || v === undefined || Number.isNaN(v)) ? "" : escapeCsvCell(v);
+      });
+      csvLines.push(line.join(","));
+    }
+  } else {
+    const headers = ["사용개월", ...columns];
+    csvLines.push(headers.map(escapeCsvCell).join(","));
+    for (let r = 0; r < rows.length; r++) {
+      const rowObj = rows[r];
+      const line = [escapeCsvCell(rowObj.usageMonth)];
+      for (let c = 0; c < columns.length; c++) {
+        const v = rowObj.values[columns[c]];
+        line.push((v === null || v === undefined || Number.isNaN(v)) ? "" : escapeCsvCell(v));
+      }
+      csvLines.push(line.join(","));
+    }
+  }
+
+  const csvContent = "\uFEFF" + csvLines.join("\r\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "Pivot_Table_Export.csv";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showMessageBox("완료", "데이터가 성공적으로 저장되었습니다.", "info");
+}
+
+// ==============================================================================
+// 6. Matplotlib 스타일 인터랙티브 차트 엔진 & NavigationToolbar
+// ==============================================================================
+const MPL_COLORS = [
+  "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
+  "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"
+];
+
+const chartEngine = {
+  type: "empty", // 'pivot' | 'dist'
+  title: "",
+  xlabel: "사용개월 (Months in Field)",
+  ylabel: "",
+  analysisType: 0,
+  series: [],       // [{ label, color, x: [], y: [], step: false, lineWidth: 1.5, showMarkers: true }]
+  band: null,       // { x: [], lower: [], upper: [], step: false }
+  scatter: null,    // { x: [], y: [], label: 'Field Failure Rate' }
+  infoBoxText: "",
+  showOutsideLegend: false,
+  defaultBounds: { xmin: 0, xmax: 120, ymin: 0, ymax: 1 },
+  viewBounds: { xmin: 0, xmax: 120, ymin: 0, ymax: 1 },
+  history: [],
+  historyIndex: -1,
+  toolMode: null,   // null | 'pan' | 'zoom'
+  isDragging: false,
+  dragStart: null,
+  dragCurrent: null,
+  hoverInfo: null,  // { xData, yData, px, py, lines: [] }
+  plotArea: { left: 65, top: 42, right: 20, bottom: 48, width: 100, height: 100 }
+};
+
+function resetViewHistory(bounds) {
+  chartEngine.defaultBounds = Object.assign({}, bounds);
+  chartEngine.viewBounds = Object.assign({}, bounds);
+  chartEngine.history = [Object.assign({}, bounds)];
+  chartEngine.historyIndex = 0;
+}
+
+function pushViewHistory(bounds) {
+  chartEngine.viewBounds = Object.assign({}, bounds);
+  chartEngine.history = chartEngine.history.slice(0, chartEngine.historyIndex + 1);
+  chartEngine.history.push(Object.assign({}, bounds));
+  chartEngine.historyIndex = chartEngine.history.length - 1;
+}
+
+function plotPivotGraph(finalDf, maxUsage, colNames, analysisType, prodQtys) {
+  const titles = [
+    "순간 서비스 건수 분석",
+    "누적 서비스 건수 분석",
+    "순간 고장률 (PDF, %)",
+    "누적 고장률 (CDF, %)"
+  ];
+  chartEngine.type = "pivot";
+  chartEngine.title = titles[analysisType];
+  chartEngine.xlabel = "사용개월 (Months in Field)";
+  chartEngine.ylabel = analysisType < 2 ? "건수" : "고장률 (%)";
+  chartEngine.analysisType = analysisType;
+  chartEngine.band = null;
+  chartEngine.scatter = null;
+  chartEngine.infoBoxText = "";
+  chartEngine.hoverInfo = null;
+  chartEngine.showOutsideLegend = colNames.length <= 20;
+
+  const series = [];
+  let maxX = 1;
+  let maxY = 0;
+
+  for (let cIdx = 0; cIdx < colNames.length; cIdx++) {
+    const col = colNames[cIdx];
+    const xs = [];
+    const ys = [];
+    for (let u = 1; u <= maxUsage; u++) {
+      const v = finalDf[u][col];
+      if (v !== null && v !== undefined && Number.isFinite(v)) {
+        xs.push(u);
+        ys.push(v);
+        if (u > maxX) maxX = u;
+        if (v > maxY) maxY = v;
+      }
+    }
+    const pq = prodQtys[col] || 0;
+    series.push({
+      label: `${col} (생산:${pq.toLocaleString()}대)`,
+      color: MPL_COLORS[cIdx % MPL_COLORS.length],
+      x: xs,
+      y: ys,
+      step: false,
+      lineWidth: 1.5,
+      showMarkers: true
+    });
+  }
+
+  chartEngine.series = series;
+  const xPad = Math.max(1, (maxX - 1) * 0.04);
+  const yTop = maxY > 0 ? maxY * 1.08 : 1.0;
+  resetViewHistory({
+    xmin: Math.max(0, 1 - xPad),
+    xmax: maxX + xPad,
+    ymin: -yTop * 0.03,
+    ymax: yTop
+  });
+  drawChartCanvas();
+}
+
+function plotDistributionResult(result, xTime, yRatio, titleSuffix = "") {
+  const model = result.model;
+  const t = result.timeline;
+  const F = result.F_t;
+  const L = result.F_lower;
+  const U = result.F_upper;
+
+  let plotT = t.slice();
+  let plotF = F.slice();
+  let plotL = L.slice();
+  let plotU = U.slice();
+
+  let maxFieldMonth = 120;
+  if (xTime && xTime.length > 0) {
+    let mMax = 0;
+    for (let i = 0; i < xTime.length; i++) {
+      if (Number.isFinite(xTime[i]) && xTime[i] > mMax) mMax = xTime[i];
+    }
+    if (mMax > 0) maxFieldMonth = mMax;
+  }
+
+  if (model === "Kaplan_Meier" && xTime && xTime.length > 0) {
+    plotT = [];
+    plotF = [];
+    plotL = [];
+    plotU = [];
+    for (let i = 0; i < t.length; i++) {
+      if (t[i] <= maxFieldMonth) {
+        plotT.push(t[i]);
+        plotF.push(F[i]);
+        plotL.push(L[i]);
+        plotU.push(U[i]);
+      }
+    }
+  }
+
+  const suffix = titleSuffix ? ` - ${titleSuffix}` : "";
+  chartEngine.type = "dist";
+  chartEngine.title = `${model} 누적고장률 그래프 (Distribution Analysis)${suffix}`;
+  chartEngine.xlabel = "사용개월 (Months in Field)";
+  chartEngine.ylabel = "누적고장률 (%)";
+  chartEngine.analysisType = parseInt(document.getElementById("combo_analysis_type").value, 10);
+  chartEngine.showOutsideLegend = false;
+  chartEngine.hoverInfo = null;
+
+  chartEngine.series = [{
+    label: `${model} F(t)`,
+    color: "blue",
+    x: plotT,
+    y: plotF,
+    step: Boolean(result.step),
+    lineWidth: 2.0,
+    showMarkers: false
+  }];
+
+  chartEngine.band = {
+    label: "Confidence Interval",
+    x: plotT,
+    lower: plotL,
+    upper: plotU,
+    step: Boolean(result.step)
+  };
+
+  if (xTime && yRatio && xTime.length > 0) {
+    chartEngine.scatter = {
+      label: "Field Failure Rate",
+      x: xTime,
+      y: yRatio
+    };
+  } else {
+    chartEngine.scatter = null;
+  }
+
+  let maxY = F.length >= 120 ? F[119] : Math.max(...F);
+  if (yRatio && yRatio.length > 0) {
+    for (let i = 0; i < yRatio.length; i++) {
+      if (Number.isFinite(yRatio[i]) && yRatio[i] > maxY) maxY = yRatio[i];
+    }
+  }
+  maxY = Math.max(maxY, 0.01);
+
+  let infoTxt = F.length >= 120
+    ? `모델: ${model}\n10년(120M) 누적고장률: ${F[119].toFixed(4)}%`
+    : `모델: ${model}`;
+  if (result.AD !== null && result.AD !== undefined && Number.isFinite(result.AD)) {
+    infoTxt += `\nAD: ${result.AD.toFixed(4)}`;
+  }
+  chartEngine.infoBoxText = infoTxt;
+
+  const xMaxLimit = (model === "Kaplan_Meier" && xTime && xTime.length > 0) ? maxFieldMonth : 120;
+  resetViewHistory({
+    xmin: 0,
+    xmax: xMaxLimit,
+    ymin: 0,
+    ymax: maxY * 1.2
+  });
+  drawChartCanvas();
+}
+
+function niceTicks(minVal, maxVal, maxTicks = 8) {
+  if (!Number.isFinite(minVal) || !Number.isFinite(maxVal) || minVal === maxVal) {
+    return [minVal || 0];
+  }
+  const range = maxVal - minVal;
+  const roughStep = range / Math.max(1, maxTicks - 1);
+  const mag = Math.pow(10, Math.floor(Math.log10(roughStep)));
+  const norm = roughStep / mag;
+  let step;
+  if (norm < 1.5) step = 1 * mag;
+  else if (norm < 3) step = 2 * mag;
+  else if (norm < 7) step = 5 * mag;
+  else step = 10 * mag;
+
+  const first = Math.ceil(minVal / step) * step;
+  const ticks = [];
+  for (let v = first; v <= maxVal + step * 1e-6; v += step) {
+    ticks.push(Number(v.toPrecision(10)));
+  }
+  return ticks;
+}
+
+function formatTickValue(val, step) {
+  if (Math.abs(val) < 1e-12) return "0";
+  if (step >= 1 && Math.abs(val - Math.round(val)) < 1e-6) {
+    return Math.round(val).toLocaleString();
+  }
+  const decimals = Math.max(0, Math.min(5, -Math.floor(Math.log10(step || 0.01)) + 1));
+  return Number(val.toFixed(decimals)).toString();
+}
+
+function drawChartCanvas() {
+  const canvas = document.getElementById("chart_canvas");
+  const wrapper = document.getElementById("canvas_wrapper");
+  if (!canvas || !wrapper) return;
+
+  const rect = wrapper.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  const width = Math.max(300, Math.floor(rect.width));
+  const height = Math.max(180, Math.floor(rect.height));
+
+  if (canvas.width !== Math.floor(width * dpr) || canvas.height !== Math.floor(height * dpr)) {
+    canvas.width = Math.floor(width * dpr);
+    canvas.height = Math.floor(height * dpr);
+  }
+
+  const ctx = canvas.getContext("2d");
+  ctx.save();
+  ctx.scale(dpr, dpr);
+
+  // 배경 클리어
+  ctx.fillStyle = "#FFFFFF";
+  ctx.fillRect(0, 0, width, height);
+
+  if (chartEngine.type === "empty") {
+    ctx.fillStyle = "#829AB1";
+    ctx.font = '10pt "Malgun Gothic", sans-serif';
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("데이터를 로드하고 [설정 적용 및 분석 실행]을 클릭하세요.", width / 2, height / 2);
+    ctx.restore();
+    return;
+  }
+
+  const rightMargin = chartEngine.showOutsideLegend ? Math.min(200, Math.max(155, Math.floor(width * 0.24))) : 24;
+  const plotLeft = 68;
+  const plotTop = 38;
+  const plotBottom = height - 44;
+  const plotRight = Math.max(plotLeft + 100, width - rightMargin);
+  const plotW = plotRight - plotLeft;
+  const plotH = Math.max(60, plotBottom - plotTop);
+
+  chartEngine.plotArea = { left: plotLeft, top: plotTop, right: plotRight, bottom: plotBottom, width: plotW, height: plotH };
+
+  const { xmin, xmax, ymin, ymax } = chartEngine.viewBounds;
+  const xToPx = x => plotLeft + ((x - xmin) / (xmax - xmin || 1)) * plotW;
+  const yToPx = y => plotBottom - ((y - ymin) / (ymax - ymin || 1)) * plotH;
+
+  // 그리드 및 틱 계산
+  const xTicks = niceTicks(xmin, xmax, 9);
+  const yTicks = niceTicks(ymin, ymax, 7);
+  const xStep = xTicks.length > 1 ? (xTicks[1] - xTicks[0]) : 1;
+  const yStep = yTicks.length > 1 ? (yTicks[1] - yTicks[0]) : 0.1;
+
+  ctx.strokeStyle = "rgba(148, 163, 184, 0.55)";
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+
+  xTicks.forEach(xt => {
+    const px = xToPx(xt);
+    if (px >= plotLeft && px <= plotRight) {
+      ctx.beginPath();
+      ctx.moveTo(px, plotTop);
+      ctx.lineTo(px, plotBottom);
+      ctx.stroke();
+    }
+  });
+
+  yTicks.forEach(yt => {
+    const py = yToPx(yt);
+    if (py >= plotTop && py <= plotBottom) {
+      ctx.beginPath();
+      ctx.moveTo(plotLeft, py);
+      ctx.lineTo(plotRight, py);
+      ctx.stroke();
+    }
+  });
+  ctx.setLineDash([]);
+
+  // 플롯 영역 클리핑
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(plotLeft, plotTop, plotW, plotH);
+  ctx.clip();
+
+  // 1) 산포도 (Field Failure Rate)
+  if (chartEngine.scatter && chartEngine.scatter.x.length > 0) {
+    ctx.fillStyle = "rgba(220, 38, 38, 0.22)";
+    const sx = chartEngine.scatter.x;
+    const sy = chartEngine.scatter.y;
+    for (let i = 0; i < sx.length; i++) {
+      const px = xToPx(sx[i]);
+      const py = yToPx(sy[i]);
+      ctx.beginPath();
+      ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // 2) 신뢰구간 밴드 (fill_between)
+  if (chartEngine.band && chartEngine.band.x.length > 0) {
+    const bx = chartEngine.band.x;
+    const bl = chartEngine.band.lower;
+    const bu = chartEngine.band.upper;
+    ctx.fillStyle = "rgba(0, 0, 255, 0.15)";
+    ctx.beginPath();
+    if (chartEngine.band.step) {
+      ctx.moveTo(xToPx(bx[0]), yToPx(bu[0]));
+      for (let i = 0; i < bx.length - 1; i++) {
+        ctx.lineTo(xToPx(bx[i + 1]), yToPx(bu[i]));
+        ctx.lineTo(xToPx(bx[i + 1]), yToPx(bu[i + 1]));
+      }
+      for (let i = bx.length - 1; i > 0; i--) {
+        ctx.lineTo(xToPx(bx[i]), yToPx(bl[i - 1]));
+        ctx.lineTo(xToPx(bx[i - 1]), yToPx(bl[i - 1]));
+      }
+    } else {
+      for (let i = 0; i < bx.length; i++) {
+        const px = xToPx(bx[i]);
+        const py = yToPx(bu[i]);
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      for (let i = bx.length - 1; i >= 0; i--) {
+        ctx.lineTo(xToPx(bx[i]), yToPx(bl[i]));
+      }
+    }
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // 3) 선 시리즈 플로팅
+  for (let sIdx = 0; sIdx < chartEngine.series.length; sIdx++) {
+    const s = chartEngine.series[sIdx];
+    if (!s.x || s.x.length === 0) continue;
+    ctx.strokeStyle = s.color;
+    ctx.lineWidth = s.lineWidth || 1.5;
+    ctx.beginPath();
+    if (s.step) {
+      ctx.moveTo(xToPx(s.x[0]), yToPx(s.y[0]));
+      for (let i = 0; i < s.x.length - 1; i++) {
+        ctx.lineTo(xToPx(s.x[i + 1]), yToPx(s.y[i]));
+        ctx.lineTo(xToPx(s.x[i + 1]), yToPx(s.y[i + 1]));
+      }
+    } else {
+      for (let i = 0; i < s.x.length; i++) {
+        const px = xToPx(s.x[i]);
+        const py = yToPx(s.y[i]);
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+    }
+    ctx.stroke();
+
+    if (s.showMarkers) {
+      ctx.fillStyle = s.color;
+      for (let i = 0; i < s.x.length; i++) {
+        const px = xToPx(s.x[i]);
+        const py = yToPx(s.y[i]);
+        ctx.beginPath();
+        ctx.arc(px, py, 2.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+
+  // 4) 분포 분석 우측 하단 정보 박스
+  if (chartEngine.infoBoxText) {
+    const infoLines = chartEngine.infoBoxText.split("\n");
+    ctx.font = '9.5pt "Malgun Gothic", sans-serif';
+    let maxW = 0;
+    infoLines.forEach(ln => {
+      const w = ctx.measureText(ln).width;
+      if (w > maxW) maxW = w;
+    });
+    const padX = 10, padY = 8, lineH = 17;
+    const boxW = maxW + padX * 2;
+    const boxH = infoLines.length * lineH + padY * 2 - 3;
+    const boxX = plotLeft + plotW * 0.95 - boxW;
+    const boxY = plotBottom - plotH * 0.05 - boxH;
+
+    ctx.fillStyle = "rgba(255, 255, 255, 0.92)";
+    ctx.strokeStyle = "#808080";
+    ctx.lineWidth = 1;
+    roundRect(ctx, boxX, boxY, boxW, boxH, 6, true, true);
+
+    ctx.fillStyle = "#102A43";
+    ctx.textAlign = "right";
+    ctx.textBaseline = "top";
+    infoLines.forEach((ln, idx) => {
+      ctx.fillText(ln, boxX + boxW - padX, boxY + padY + idx * lineH);
+    });
+  }
+
+  // 5) 분포 분석 좌측 상단 내부 범례
+  if (chartEngine.type === "dist") {
+    const legItems = [];
+    chartEngine.series.forEach(s => legItems.push({ type: "line", color: s.color, label: s.label }));
+    if (chartEngine.band) legItems.push({ type: "band", color: "rgba(0,0,255,0.22)", label: chartEngine.band.label });
+    if (chartEngine.scatter) legItems.push({ type: "scatter", color: "rgba(220,38,38,0.5)", label: chartEngine.scatter.label });
+
+    ctx.font = '8.5pt "Malgun Gothic", sans-serif';
+    let maxLW = 0;
+    legItems.forEach(it => {
+      const w = ctx.measureText(it.label).width;
+      if (w > maxLW) maxLW = w;
+    });
+    const lx = plotLeft + 10;
+    const ly = plotTop + 10;
+    const lw = maxLW + 38;
+    const lh = legItems.length * 18 + 10;
+
+    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+    ctx.strokeStyle = "#CBD5E1";
+    ctx.lineWidth = 1;
+    roundRect(ctx, lx, ly, lw, lh, 4, true, true);
+
+    legItems.forEach((it, idx) => {
+      const iy = ly + 12 + idx * 18;
+      if (it.type === "line") {
+        ctx.strokeStyle = it.color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(lx + 8, iy);
+        ctx.lineTo(lx + 26, iy);
+        ctx.stroke();
+      } else if (it.type === "band") {
+        ctx.fillStyle = it.color;
+        ctx.fillRect(lx + 8, iy - 5, 18, 10);
+      } else if (it.type === "scatter") {
+        ctx.fillStyle = it.color;
+        ctx.beginPath();
+        ctx.arc(lx + 17, iy, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.fillStyle = "#1F2933";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText(it.label, lx + 32, iy);
+    });
+  }
+
+  // Zoom 드래그 사각형 표시
+  if (chartEngine.isDragging && chartEngine.toolMode === "zoom" && chartEngine.dragStart && chartEngine.dragCurrent) {
+    const rx = Math.min(chartEngine.dragStart.x, chartEngine.dragCurrent.x);
+    const ry = Math.min(chartEngine.dragStart.y, chartEngine.dragCurrent.y);
+    const rw = Math.abs(chartEngine.dragCurrent.x - chartEngine.dragStart.x);
+    const rh = Math.abs(chartEngine.dragCurrent.y - chartEngine.dragStart.y);
+    ctx.fillStyle = "rgba(47, 128, 237, 0.15)";
+    ctx.strokeStyle = "#2F80ED";
+    ctx.lineWidth = 1;
+    ctx.fillRect(rx, ry, rw, rh);
+    ctx.strokeRect(rx, ry, rw, rh);
+  }
+
+  ctx.restore(); // 클리핑 해제
+
+  // 플롯 테두리
+  ctx.strokeStyle = "#334E68";
+  ctx.lineWidth = 1.1;
+  ctx.strokeRect(plotLeft, plotTop, plotW, plotH);
+
+  // 축 틱 라벨 출력
+  ctx.fillStyle = "#1F2933";
+  ctx.font = '8.5pt "Malgun Gothic", sans-serif';
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  xTicks.forEach(xt => {
+    const px = xToPx(xt);
+    if (px >= plotLeft - 2 && px <= plotRight + 2) {
+      ctx.beginPath();
+      ctx.moveTo(px, plotBottom);
+      ctx.lineTo(px, plotBottom + 4);
+      ctx.stroke();
+      ctx.fillText(formatTickValue(xt, xStep), px, plotBottom + 6);
+    }
+  });
+
+  ctx.textAlign = "right";
+  ctx.textBaseline = "middle";
+  yTicks.forEach(yt => {
+    const py = yToPx(yt);
+    if (py >= plotTop - 2 && py <= plotBottom + 2) {
+      ctx.beginPath();
+      ctx.moveTo(plotLeft - 4, py);
+      ctx.lineTo(plotLeft, py);
+      ctx.stroke();
+      ctx.fillText(formatTickValue(yt, yStep), plotLeft - 7, py);
+    }
+  });
+
+  // 차트 타이틀 & X/Y축 라벨
+  ctx.fillStyle = "#102A43";
+  ctx.font = 'bold 11pt "Malgun Gothic", sans-serif';
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  ctx.fillText(chartEngine.title, plotLeft + plotW / 2, 10);
+
+  ctx.font = '9.5pt "Malgun Gothic", sans-serif';
+  ctx.textAlign = "center";
+  ctx.textBaseline = "bottom";
+  ctx.fillText(chartEngine.xlabel, plotLeft + plotW / 2, height - 6);
+
+  ctx.save();
+  ctx.translate(16, plotTop + plotH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  ctx.fillText(chartEngine.ylabel, 0, 0);
+  ctx.restore();
+
+  // 우측 외부 범례 (항목 20개 이하일 때)
+  if (chartEngine.showOutsideLegend && chartEngine.series.length > 0 && chartEngine.series.length <= 20) {
+    const lx = plotRight + 10;
+    const ly = plotTop;
+    const lw = width - lx - 6;
+    const itemH = Math.min(18, Math.max(13, Math.floor(plotH / chartEngine.series.length)));
+    const lh = chartEngine.series.length * itemH + 10;
+
+    ctx.fillStyle = "rgba(255, 255, 255, 0.92)";
+    ctx.strokeStyle = "#CBD5E1";
+    ctx.lineWidth = 1;
+    roundRect(ctx, lx, ly, lw, lh, 4, true, true);
+
+    ctx.font = '8pt "Malgun Gothic", sans-serif';
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    for (let i = 0; i < chartEngine.series.length; i++) {
+      const s = chartEngine.series[i];
+      const iy = ly + 9 + i * itemH;
+      ctx.strokeStyle = s.color;
+      ctx.fillStyle = s.color;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(lx + 6, iy);
+      ctx.lineTo(lx + 20, iy);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(lx + 13, iy, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#1F2933";
+      ctx.fillText(s.label, lx + 24, iy, lw - 28);
+    }
+  }
+
+  // 호버 주석(Annotation) 툴팁 렌더링
+  if (chartEngine.hoverInfo) {
+    const h = chartEngine.hoverInfo;
+    ctx.font = '8.8pt "Malgun Gothic", sans-serif';
+    let maxTW = 0;
+    h.lines.forEach(ln => {
+      const w = ctx.measureText(ln).width;
+      if (w > maxTW) maxTW = w;
+    });
+    const padX = 8, padY = 6, lineH = 15;
+    const boxW = maxTW + padX * 2;
+    const boxH = h.lines.length * lineH + padY * 2 - 2;
+
+    let bx = h.px + 15;
+    let by = h.py - 15 - boxH;
+    if (bx + boxW > width - 8) bx = h.px - 15 - boxW;
+    if (by < 8) by = h.py + 15;
+
+    // 화살표 연결선
+    ctx.strokeStyle = "#475569";
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(bx + boxW / 2, by + boxH / 2);
+    ctx.lineTo(h.px, h.py);
+    ctx.stroke();
+
+    // 포인트 강조 원
+    ctx.fillStyle = h.color || "#2F80ED";
+    ctx.beginPath();
+    ctx.arc(h.px, h.py, 4.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 툴팁 박스
+    ctx.fillStyle = "rgba(255, 255, 255, 0.94)";
+    ctx.strokeStyle = "#808080";
+    ctx.lineWidth = 1;
+    roundRect(ctx, bx, by, boxW, boxH, 6, true, true);
+
+    ctx.fillStyle = "#102A43";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    h.lines.forEach((ln, idx) => {
+      ctx.fillText(ln, bx + padX, by + padY + idx * lineH);
+    });
+  }
+
+  ctx.restore();
+}
+
+function roundRect(ctx, x, y, w, h, r, fill, stroke) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+  if (fill) ctx.fill();
+  if (stroke) ctx.stroke();
+}
+
+// ==============================================================================
+// 7. 캔버스 마우스 이벤트 (호버 주석, Pan, Zoom) 및 툴바 버튼 연결
+// ==============================================================================
+const chartCanvas = document.getElementById("chart_canvas");
+
+chartCanvas.addEventListener("mousemove", (e) => {
+  const rect = chartCanvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const pa = chartEngine.plotArea;
+  const { xmin, xmax, ymin, ymax } = chartEngine.viewBounds;
+
+  if (mx >= pa.left && mx <= pa.right && my >= pa.top && my <= pa.bottom && chartEngine.type !== "empty") {
+    const xData = xmin + ((mx - pa.left) / (pa.width || 1)) * (xmax - xmin);
+    const yData = ymin + ((pa.bottom - my) / (pa.height || 1)) * (ymax - ymin);
+    document.getElementById("mpl_coords").textContent = `x=${xData.toFixed(1)}, y=${yData.toFixed(4)}`;
+  } else {
+    document.getElementById("mpl_coords").textContent = "";
+  }
+
+  if (chartEngine.isDragging && chartEngine.dragStart) {
+    chartEngine.dragCurrent = { x: mx, y: my };
+    if (chartEngine.toolMode === "pan") {
+      const dxPx = mx - chartEngine.dragStart.x;
+      const dyPx = my - chartEngine.dragStart.y;
+      const xSpan = chartEngine.dragStart.bounds.xmax - chartEngine.dragStart.bounds.xmin;
+      const ySpan = chartEngine.dragStart.bounds.ymax - chartEngine.dragStart.bounds.ymin;
+      const dxVal = -(dxPx / (pa.width || 1)) * xSpan;
+      const dyVal =  (dyPx / (pa.height || 1)) * ySpan;
+      chartEngine.viewBounds = {
+        xmin: chartEngine.dragStart.bounds.xmin + dxVal,
+        xmax: chartEngine.dragStart.bounds.xmax + dxVal,
+        ymin: chartEngine.dragStart.bounds.ymin + dyVal,
+        ymax: chartEngine.dragStart.bounds.ymax + dyVal
+      };
+    }
+    drawChartCanvas();
+    return;
+  }
+
+  // 호버 포인트 탐색 (update_annot 대응)
+  if (chartEngine.type === "empty" || mx < pa.left || mx > pa.right || my < pa.top || my > pa.bottom) {
+    if (chartEngine.hoverInfo) {
+      chartEngine.hoverInfo = null;
+      drawChartCanvas();
+    }
+    return;
+  }
+
+  const xToPx = x => pa.left + ((x - xmin) / (xmax - xmin || 1)) * pa.width;
+  const yToPx = y => pa.bottom - ((y - ymin) / (ymax - ymin || 1)) * pa.height;
+
+  let bestDist = 12.0; // 12px 이내 포인트 감지
+  let found = null;
+
+  for (let sIdx = 0; sIdx < chartEngine.series.length; sIdx++) {
+    const s = chartEngine.series[sIdx];
+    for (let i = 0; i < s.x.length; i++) {
+      const px = xToPx(s.x[i]);
+      const py = yToPx(s.y[i]);
+      const dist = Math.hypot(mx - px, my - py);
+      if (dist < bestDist) {
+        bestDist = dist;
+        const posX = s.x[i];
+        const posY = s.y[i];
+        let yStr;
+        if (chartEngine.analysisType === 4) {
+          yStr = `${posY.toFixed(4)}%`;
+        } else if (chartEngine.analysisType < 2) {
+          yStr = `${Math.trunc(posY).toLocaleString()}건`;
+        } else {
+          yStr = `${posY.toFixed(4)}%`;
+        }
+        found = {
+          px,
+          py,
+          color: s.color,
+          lines: [
+            `[${s.label}]`,
+            `사용개월: ${Math.trunc(posX)}M`,
+            `값: ${yStr}`
+          ]
+        };
+      }
+    }
+  }
+
+  if (found || chartEngine.hoverInfo) {
+    chartEngine.hoverInfo = found;
+    drawChartCanvas();
+  }
+});
+
+chartCanvas.addEventListener("mouseleave", () => {
+  document.getElementById("mpl_coords").textContent = "";
+  if (chartEngine.hoverInfo) {
+    chartEngine.hoverInfo = null;
+    drawChartCanvas();
+  }
+});
+
+chartCanvas.addEventListener("mousedown", (e) => {
+  if (!chartEngine.toolMode || chartEngine.type === "empty") return;
+  const rect = chartCanvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  chartEngine.isDragging = true;
+  chartEngine.dragStart = {
+    x: mx,
+    y: my,
+    bounds: Object.assign({}, chartEngine.viewBounds)
+  };
+  chartEngine.dragCurrent = { x: mx, y: my };
+});
+
+window.addEventListener("mouseup", () => {
+  if (!chartEngine.isDragging) return;
+  chartEngine.isDragging = false;
+  const pa = chartEngine.plotArea;
+
+  if (chartEngine.toolMode === "pan") {
+    pushViewHistory(chartEngine.viewBounds);
+  } else if (chartEngine.toolMode === "zoom" && chartEngine.dragStart && chartEngine.dragCurrent) {
+    const x1 = Math.max(pa.left, Math.min(pa.right, chartEngine.dragStart.x));
+    const x2 = Math.max(pa.left, Math.min(pa.right, chartEngine.dragCurrent.x));
+    const y1 = Math.max(pa.top, Math.min(pa.bottom, chartEngine.dragStart.y));
+    const y2 = Math.max(pa.top, Math.min(pa.bottom, chartEngine.dragCurrent.y));
+    if (Math.abs(x2 - x1) > 8 && Math.abs(y2 - y1) > 8) {
+      const { xmin, xmax, ymin, ymax } = chartEngine.viewBounds;
+      const newXMin = xmin + ((Math.min(x1, x2) - pa.left) / pa.width) * (xmax - xmin);
+      const newXMax = xmin + ((Math.max(x1, x2) - pa.left) / pa.width) * (xmax - xmin);
+      const newYMin = ymin + ((pa.bottom - Math.max(y1, y2)) / pa.height) * (ymax - ymin);
+      const newYMax = ymin + ((pa.bottom - Math.min(y1, y2)) / pa.height) * (ymax - ymin);
+      pushViewHistory({ xmin: newXMin, xmax: newXMax, ymin: newYMin, ymax: newYMax });
+    }
+  }
+  chartEngine.dragStart = null;
+  chartEngine.dragCurrent = null;
+  drawChartCanvas();
+});
+
+// 툴바 버튼 동작
+function setActiveTool(mode) {
+  chartEngine.toolMode = (chartEngine.toolMode === mode) ? null : mode;
+  document.getElementById("tool_pan").classList.toggle("active", chartEngine.toolMode === "pan");
+  document.getElementById("tool_zoom").classList.toggle("active", chartEngine.toolMode === "zoom");
+  chartCanvas.style.cursor = chartEngine.toolMode === "pan" ? "grab" : (chartEngine.toolMode === "zoom" ? "crosshair" : "default");
+}
+
+document.getElementById("tool_home").addEventListener("click", () => {
+  if (chartEngine.type === "empty") return;
+  pushViewHistory(chartEngine.defaultBounds);
+  drawChartCanvas();
+});
+
+document.getElementById("tool_back").addEventListener("click", () => {
+  if (chartEngine.historyIndex > 0) {
+    chartEngine.historyIndex--;
+    chartEngine.viewBounds = Object.assign({}, chartEngine.history[chartEngine.historyIndex]);
+    drawChartCanvas();
+  }
+});
+
+document.getElementById("tool_forward").addEventListener("click", () => {
+  if (chartEngine.historyIndex < chartEngine.history.length - 1) {
+    chartEngine.historyIndex++;
+    chartEngine.viewBounds = Object.assign({}, chartEngine.history[chartEngine.historyIndex]);
+    drawChartCanvas();
+  }
+});
+
+document.getElementById("tool_pan").addEventListener("click", () => setActiveTool("pan"));
+document.getElementById("tool_zoom").addEventListener("click", () => setActiveTool("zoom"));
+
+document.getElementById("tool_save").addEventListener("click", () => {
+  const url = chartCanvas.toDataURL("image/png");
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "SVC_Pro_Analyzer_Chart.png";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+});
+
+window.addEventListener("resize", () => drawChartCanvas());
+
+// ==============================================================================
+// 8. UI 컨트롤 이벤트 바인딩 및 스플리터 리사이즈
+// ==============================================================================
+document.getElementById("combo_close_col").addEventListener("change", () => {
+  if (!appState.signals_blocked) processServiceData();
+});
+
+document.getElementById("combo_prod_col").addEventListener("change", () => {
+  if (!appState.signals_blocked) processServiceData();
+});
+
+document.getElementById("combo_start_month").addEventListener("change", () => {
+  if (!appState.signals_blocked) updatePlotMonthsList();
+});
+
+document.getElementById("combo_end_month").addEventListener("change", () => {
+  if (!appState.signals_blocked) updatePlotMonthsList();
+});
+
+document.getElementById("combo_part_col").addEventListener("change", () => {
+  if (!appState.signals_blocked) updateComponentsList();
+});
+
+document.getElementById("combo_part_col_2").addEventListener("change", () => {
+  if (!appState.signals_blocked) updateComponentsList2();
+});
+
+document.getElementById("radio_monthly").addEventListener("change", updatePlotListMode);
+document.getElementById("radio_yearly").addEventListener("change", updatePlotListMode);
+
+document.getElementById("combo_analysis_type").addEventListener("change", () => {
+  if (appState.signals_blocked) return;
+  const idx = parseInt(document.getElementById("combo_analysis_type").value, 10);
+  if (idx === 4 || idx === 5) {
+    document.getElementById("btn_run_analysis").disabled = false;
+    if (appState.df_svc && Object.keys(appState.prod_qty_map).length > 0) {
+      runDistributionAnalysis();
+    }
+  } else {
+    document.getElementById("btn_run_analysis").disabled = !(appState.df_svc && Object.keys(appState.prod_qty_map).length > 0);
+  }
+});
+
+function onDistributionOptionChanged() {
+  if (appState.signals_blocked) return;
+  const idx = parseInt(document.getElementById("combo_analysis_type").value, 10);
+  if (idx === 4 || idx === 5) {
+    if (!appState.distribution_context) {
+      runDistributionAnalysis();
+    } else {
+      applyDistributionModel(document.getElementById("combo_distribution_model").value);
+    }
+  }
+}
+
+document.getElementById("combo_distribution_model").addEventListener("change", onDistributionOptionChanged);
+document.getElementById("combo_fit_optimizer").addEventListener("change", onDistributionOptionChanged);
+document.getElementById("combo_fit_method").addEventListener("change", onDistributionOptionChanged);
+document.getElementById("combo_fit_ci").addEventListener("change", onDistributionOptionChanged);
+
+document.getElementById("btn_run_analysis").addEventListener("click", runAnalysis);
+document.getElementById("btn_export").addEventListener("click", exportCsv);
+
+document.getElementById("btn_exit").addEventListener("click", () => {
+  showMessageBox("종료", "프로그램을 종료합니다. (웹 브라우저 탭을 닫거나 초기 상태로 리셋할 수 있습니다.)", "info");
+});
+
+// 스플리터 드래그 기능
+(function setupSplitter() {
+  const handle = document.getElementById("splitter_handle");
+  const leftPanel = document.getElementById("left_panel");
+  let dragging = false;
+
+  handle.addEventListener("mousedown", (e) => {
+    e.preventDefault();
+    dragging = true;
+    handle.classList.add("dragging");
+  });
+
+  window.addEventListener("mousemove", (e) => {
+    if (!dragging) return;
+    const newW = Math.max(280, Math.min(520, e.clientX - 8));
+    leftPanel.style.width = `${newW}px`;
+    drawChartCanvas();
+  });
+
+  window.addEventListener("mouseup", () => {
+    if (dragging) {
+      dragging = false;
+      handle.classList.remove("dragging");
+      drawChartCanvas();
+    }
+  });
+})();
+
+// 초기 빈 캔버스 렌더링
+window.addEventListener("DOMContentLoaded", () => {
+  drawChartCanvas();
+});
+</script>
+</body>
+</html>
